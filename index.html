@@ -2065,22 +2065,30 @@
         }
         dbRef = firebase.database().ref("diamond_stock_system");
         
-        // Setup initial sync
-        dbRef.once("value").then((snapshot) => {
-          const val = snapshot.val();
-          if (val) {
-            // Overwrite local only if local is empty to preserve offline local state
-            if (!state.kapans || state.kapans.length === 0) {
+        // One-time overwrite to wipe old remote Firebase database entries and start clean
+        if (!state.firebaseWiped) {
+          dbRef.set(state).then(() => {
+            state.firebaseWiped = true;
+            saveState();
+            console.log("Firebase wiped clean and initialized with fresh schema.");
+          }).catch(err => {
+            console.warn("Firebase initial wipe failed (rules might prevent write):", err);
+          });
+        } else {
+          // Listen for updates and download from Firebase
+          dbRef.once("value").then((snapshot) => {
+            const val = snapshot.val();
+            if (val) {
               state = val;
               saveState();
               renderAll();
             }
-          }
-        }).catch(err => {
-          console.warn("Firebase read error (read rules check):", err);
-        });
+          }).catch(err => {
+            console.warn("Firebase initial read failed:", err);
+          });
+        }
 
-        // Listen for live updates
+        // Listen for live changes
         dbRef.on("value", (snapshot) => {
           const val = snapshot.val();
           if (val && JSON.stringify(val) !== JSON.stringify(state)) {
@@ -2123,7 +2131,7 @@
           depts: parsed.depts || [],
           deptConfigs: parsed.deptConfigs || {},
           autoLogoutHours: parsed.autoLogoutHours !== undefined ? parsed.autoLogoutHours : 11,
-          firebaseConfig: parsed.firebaseConfig || { apiKey: "", dbUrl: "", projectId: "" }
+          firebaseConfig: parsed.firebaseConfig || { apiKey: "AIzaSyDvu7pJMXatKNHFAuJMtsh_zpmb8Jr0BCM", dbUrl: "https://ng-cost-default-rtdb.firebaseio.com", projectId: "ng-cost" }
         };
 
         if (state.depts && state.depts.length > 0) {
@@ -2172,7 +2180,8 @@
       state.depts = [...DEPTS];
       state.deptConfigs = JSON.parse(JSON.stringify(DEFAULT_DEPT_CONFIGS));
       state.autoLogoutHours = 11;
-      state.firebaseConfig = { apiKey: "", dbUrl: "", projectId: "" };
+      state.firebaseConfig = { apiKey: "AIzaSyDvu7pJMXatKNHFAuJMtsh_zpmb8Jr0BCM", dbUrl: "https://ng-cost-default-rtdb.firebaseio.com", projectId: "ng-cost" };
+      state.firebaseWiped = false;
     }
     initFirebase();
   }
@@ -5445,7 +5454,7 @@
         },
         majuriRate: 65,
         roughLots: [], kapans: [], transfers: [], repairs: [], audits: [], polishCharts: [], transferRules: [],
-        depts: [...DEPTS], deptConfigs: {}, autoLogoutHours: 11, firebaseConfig: { apiKey: "", dbUrl: "", projectId: "" }
+        depts: [...DEPTS], deptConfigs: {}, autoLogoutHours: 11, firebaseConfig: { apiKey: "AIzaSyDvu7pJMXatKNHFAuJMtsh_zpmb8Jr0BCM", dbUrl: "https://ng-cost-default-rtdb.firebaseio.com", projectId: "ng-cost" }, firebaseWiped: false
       };
       if (dbRef) dbRef.set(state);
       checkInitialData();
@@ -5468,7 +5477,7 @@
         },
         majuriRate: 65,
         roughLots: [], kapans: [], transfers: [], repairs: [], audits: [], polishCharts: [], transferRules: [],
-        depts: [...DEPTS], deptConfigs: {}, autoLogoutHours: 11, firebaseConfig: { apiKey: "", dbUrl: "", projectId: "" }
+        depts: [...DEPTS], deptConfigs: {}, autoLogoutHours: 11, firebaseConfig: { apiKey: "AIzaSyDvu7pJMXatKNHFAuJMtsh_zpmb8Jr0BCM", dbUrl: "https://ng-cost-default-rtdb.firebaseio.com", projectId: "ng-cost" }, firebaseWiped: false
       };
       if (dbRef) dbRef.set(state);
       checkInitialData();
