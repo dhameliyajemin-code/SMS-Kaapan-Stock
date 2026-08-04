@@ -2205,7 +2205,7 @@
       `;
 
       // Column values exactly like Row 7
-      const roughSize = (k.nang > 0 && roughWeight > 0) ? (k.nang / roughWeight).toFixed(4) : "-";
+      const roughSize = (k.nang > 0 && roughWeight > 0) ? (k.nang / roughWeight).toFixed(2) : "-";
       const mkSize = (k.makeablePiece > 0 && k.makeableVajan > 0) ? (k.makeablePiece / k.makeableVajan).toFixed(4) : "-";
       
       const expVajan = k.makeableVajan ? k.makeableVajan.toFixed(2) : "-";
@@ -2733,7 +2733,7 @@
               <thead><tr><th colspan="2" style="border: 1.5px solid #000; padding: 4px 6px; background: #f1f5f9;">ગેલેક્ષી વીગત</th></tr></thead>
               <tbody>
                 <tr><td style="border: 1.5px solid #000; padding: 4px 6px;">કાચું વજન</td><td style="border: 1.5px solid #000; padding: 4px 6px;"><b>${pc.rWeight || ""}</b></td></tr>
-                <tr><td style="border: 1.5px solid #000; padding: 4px 6px;">રફ સાઇઝ</td><td style="border: 1.5px solid #000; padding: 4px 6px;"><b>${pc.rSize || ""}</b></td></tr>
+                <tr><td style="border: 1.5px solid #000; padding: 4px 6px;">રફ સાઇઝ</td><td style="border: 1.5px solid #000; padding: 4px 6px;"><b>${pc.rSize != null && pc.rSize !== "" ? Number(pc.rSize).toFixed(2) : ""}</b></td></tr>
                 <tr><td style="border: 1.5px solid #000; padding: 4px 6px;">ક્રાફ સાઇઝ</td><td style="border: 1.5px solid #000; padding: 4px 6px;"><b>${pc.cardSize || ""}</b></td></tr>
                 <tr><td style="border: 1.5px solid #000; padding: 4px 6px;">માંગેલું વજન %</td><td style="border: 1.5px solid #000; padding: 4px 6px;"><b>${pc.reqWeightPct != null && pc.reqWeightPct !== "" ? Number(pc.reqWeightPct).toFixed(2) : ""}%</b></td></tr>
                 <tr><td style="border: 1.5px solid #000; padding: 4px 6px;">4P %</td><td style="border: 1.5px solid #000; padding: 4px 6px;"><b>${pc.fourPPct != null && pc.fourPPct !== "" ? Number(pc.fourPPct).toFixed(2) : ""}%</b></td></tr>
