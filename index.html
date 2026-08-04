@@ -3751,7 +3751,7 @@
 
     const toDept = document.getElementById("qtToDeptSelect").value;
     const targetConfig = state.deptConfigs[toDept] || {};
-    const customBox = document.getElementById("qtCustomFieldBox");
+    const customBox = document.getElementById("qtDynamicInputsContainer");
     if (targetConfig && targetConfig.customHeader) {
       const isReq = targetConfig.isCompulsory !== false;
       customBox.innerHTML = `
