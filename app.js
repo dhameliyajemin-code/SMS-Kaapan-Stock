@@ -282,7 +282,7 @@
     audits: [],
     polishCharts: [],
     transferRules: [
-      { from: "Galaxy", to: "4P", customHeader: "GLX Top Size", isCompulsory: true },
+      { from: "Galaxy", to: "AP OK", customHeader: "Rough to Polish %", isCompulsory: true },
       { from: "4P", to: "RT", customHeader: "4P Output Carats", isCompulsory: true }
     ],
     depts: [],
@@ -320,7 +320,7 @@
   const DEFAULT_DEPT_CONFIGS = {
     "Galaxy": { receivesFrom: [], sendsTo: ["AP OK"], customHeader: "", isCompulsory: false, ratePerPiece: 5, fieldsConfig: { nung: { show: true, compulsory: true }, vajan: { show: true, compulsory: true }, lot: { show: false, compulsory: false } } },
     "AP OK": { receivesFrom: ["Galaxy"], sendsTo: ["4P"], customHeader: "", isCompulsory: false, ratePerPiece: 5, fieldsConfig: { nung: { show: true, compulsory: true }, vajan: { show: true, compulsory: true }, lot: { show: false, compulsory: false } } },
-    "4P": { receivesFrom: ["AP OK"], sendsTo: ["4P OK RT BAAKI"], customHeader: "4P Output Carats", isCompulsory: true, ratePerPiece: 8, fieldsConfig: { nung: { show: true, compulsory: true }, vajan: { show: true, compulsory: true }, lot: { show: true, compulsory: true } } },
+    "4P": { receivesFrom: ["AP OK"], sendsTo: ["4P OK RT BAAKI"], customHeader: "", isCompulsory: false, ratePerPiece: 8, fieldsConfig: { nung: { show: true, compulsory: true }, vajan: { show: true, compulsory: true }, lot: { show: true, compulsory: true } } },
     "4P OK RT BAAKI": { receivesFrom: ["4P"], sendsTo: ["RT"], customHeader: "", isCompulsory: false, ratePerPiece: 5, fieldsConfig: { nung: { show: true, compulsory: true }, vajan: { show: true, compulsory: true }, lot: { show: true, compulsory: true } } },
     "RT": { receivesFrom: ["4P OK RT BAAKI"], sendsTo: ["RT OK KHATA BAAKI"], customHeader: "", isCompulsory: false, ratePerPiece: 6, fieldsConfig: { nung: { show: true, compulsory: true }, vajan: { show: true, compulsory: true }, lot: { show: true, compulsory: true } } },
     "RT OK KHATA BAAKI": { receivesFrom: ["RT"], sendsTo: ["KHATA"], customHeader: "", isCompulsory: false, ratePerPiece: 5, fieldsConfig: { nung: { show: true, compulsory: true }, vajan: { show: true, compulsory: true }, lot: { show: true, compulsory: true } } },
@@ -496,12 +496,14 @@
       try { 
         const parsed = JSON.parse(saved) || {};
         let authObj = parsed.auth || {};
-        if (authObj.adminPass || authObj.stockPass || authObj.editPassword || !authObj.adminPassHash) {
-          authObj = {
-            adminPassHash: "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
-            stockPassHash: "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
-            editPassHash: "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3"
-          };
+        if (!authObj.adminPassHash) {
+          authObj.adminPassHash = "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3";
+        }
+        if (!authObj.stockPassHash) {
+          authObj.stockPassHash = "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3";
+        }
+        if (!authObj.editPassHash) {
+          authObj.editPassHash = "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3";
         }
         state = {
           auth: authObj,
@@ -550,13 +552,24 @@
           state.deptConfigs = JSON.parse(JSON.stringify(DEFAULT_DEPT_CONFIGS));
         }
 
+        // Clean up 4P customHeader default config
+        if (state.deptConfigs && state.deptConfigs["4P"]) {
+          state.deptConfigs["4P"].customHeader = "";
+          state.deptConfigs["4P"].isCompulsory = false;
+        }
+
         // Ensure password hashes are present
-        if (!state.auth || !state.auth.adminPassHash) {
-          state.auth = {
-            adminPassHash: "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
-            stockPassHash: "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
-            editPassHash: "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3"
-          };
+        if (!state.auth) {
+          state.auth = {};
+        }
+        if (!state.auth.adminPassHash) {
+          state.auth.adminPassHash = "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3";
+        }
+        if (!state.auth.stockPassHash) {
+          state.auth.stockPassHash = "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3";
+        }
+        if (!state.auth.editPassHash) {
+          state.auth.editPassHash = "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3";
         }
 
         // Save migrated state back
@@ -765,12 +778,17 @@
       const roughWeight = k.roughWeight || k.carat;
       const masterMajRate = state.majuriRate !== undefined ? state.majuriRate : 65;
       
+      const defaultPolishNang = k.rtNang || k.fourPNang || k.makeablePiece || k.nang;
+      const defaultPolishCarat = k.rtCt || k.fourPCt || k.makeableVajan || k.carat;
+      const defaultAchievedPct = roughWeight > 0 ? (defaultPolishCarat / roughWeight * 100) : 0;
+      const dDays = getDeptDaysForPolishChart(k.kapanNo);
+
       const roughAmt = roughWeight * roughRate;
-      const majuri = k.nang * masterMajRate;
+      const majuri = defaultPolishNang * masterMajRate;
       const totalExpense = roughAmt + majuri;
       const totalExpenseRounded = Math.round(totalExpense / 100) * 100;
       
-      const initialPadtar = k.carat > 0 ? Math.round(Math.round(totalExpenseRounded / k.carat) / 10) * 10 : 0;
+      const initialPadtar = defaultPolishCarat > 0 ? Math.round(Math.round(totalExpenseRounded / defaultPolishCarat) / 10) * 10 : 0;
 
       chart = {
         id: "PC" + Date.now() + "_" + Math.random().toString(36).substr(2, 4),
@@ -784,27 +802,29 @@
         shading: "",
         
         // Assortment table values
-        tableAssort: "",
-        tableGlx: "",
-        tableReAssort: "",
-        tableKhata: "",
-        tableJama: "",
+        tableAssort: dDays.assort,
+        tableGlx: dDays.galaxy,
+        table4P: dDays.fourP,
+        tableRT: dDays.rt,
+        tableReAssort: dDays.reAssort,
+        tableKhata: dDays.khata,
+        tableJama: dDays.total,
         tableVigat: "",
         tableRaOut: "",
         tablePoHead: "",
         tableRepairPct: "",
 
         rWeight: roughWeight,
-        rSize: k.roughWeight > 0 ? (k.nang / k.roughWeight).toFixed(4) : (k.carat > 0 ? (k.nang / k.carat).toFixed(4) : "0.00"),
-        cardSize: calculateKraftSize(k),
+        rSize: (defaultPolishNang / roughWeight).toFixed(2),
+        cardSize: calculateKraftSize(k).toFixed(2),
         reqWeightPct: k.r2pPct || 0,
         fourPPct: k.fourPPct || 0,
         rtPct: k.rtPct || 0,
-        multPct: 0,
-        rToPolishPct: k.r2pPct || 0,
-        varPct: 0,
-        weightFormula: Math.round(roughWeight * roughRate).toString(),
-        gNangFormula: Math.round(k.nang * masterMajRate).toString(),
+        multPct: parseFloat(defaultAchievedPct.toFixed(2)),
+        rToPolishPct: parseFloat(defaultAchievedPct.toFixed(2)),
+        varPct: parseFloat((defaultAchievedPct - (k.r2pPct || 0)).toFixed(2)),
+        weightFormula: roughWeight.toFixed(2) + " * " + Math.round(roughRate),
+        gNangFormula: Math.round(defaultPolishNang * masterMajRate).toString(),
 
         // Planning inputs
         salePct: 0,
@@ -825,8 +845,8 @@
         gowttlb: 0,
         gtlblbdb: 0,
 
-        polishNang: k.nang,
-        polishCarat: k.carat,
+        polishNang: defaultPolishNang,
+        polishCarat: defaultPolishCarat,
         padtar: initialPadtar,
         vigat: k.vigat || "ઓટો-જનરેટેડ ડ્રાફ્ટ ચાર્ટ"
       };
@@ -1876,6 +1896,10 @@
     document.getElementById("qtNangVal").value = k.nang;
     document.getElementById("qtVigat").value = "";
 
+    const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+    const localISOTime = (new Date(Date.now() - tzoffset)).toISOString().slice(0, 16);
+    document.getElementById("qtDateTime").value = localISOTime;
+
     const toSel = document.getElementById("qtToDeptSelect");
     const config = state.deptConfigs[k.currentDept] || {};
     const sendsList = config.sendsTo && config.sendsTo.length > 0 ? config.sendsTo : DEPTS;
@@ -1903,14 +1927,31 @@
     const k = (state.kapans || []).find(x => x.id === kId);
     if (!k) return;
 
+    const fromDept = k.currentDept;
     const toDept = document.getElementById("qtToDeptSelect").value;
-    const targetConfig = state.deptConfigs[toDept] || {};
     const customBox = document.getElementById("qtDynamicInputsContainer");
-    if (targetConfig && targetConfig.customHeader) {
-      const isReq = targetConfig.isCompulsory !== false;
+
+    if (fromDept === "Galaxy" && toDept === "AP OK") {
       customBox.innerHTML = `
-        <label>${targetConfig.customHeader} ${isReq ? '<span class="req-star">*</span>' : ''}</label>
-        <input type="text" id="qtCustomVal" ${isReq ? 'required' : ''} placeholder="${targetConfig.customHeader} લખો">
+        <label>Rough to Polish % <span class="req-star">*</span></label>
+        <input type="number" step="0.01" min="0" max="100" id="qtCustomVal" required placeholder="દા.ત. 28.47">
+      `;
+      return;
+    }
+
+    if (fromDept === "AP OK" && toDept === "4P") {
+      customBox.innerHTML = "";
+      return;
+    }
+
+    const transferRule = (state.transferRules || []).find(r => r.from === fromDept && r.to === toDept);
+    const customHeader = transferRule ? transferRule.customHeader : "";
+    const isReq = transferRule ? transferRule.isCompulsory !== false : false;
+
+    if (customHeader) {
+      customBox.innerHTML = `
+        <label>${customHeader} ${isReq ? '<span class="req-star">*</span>' : ''}</label>
+        <input type="text" id="qtCustomVal" ${isReq ? 'required' : ''} placeholder="${customHeader} લખો">
       `;
     } else {
       customBox.innerHTML = "";
@@ -1928,29 +1969,47 @@
     if (!k) return;
 
     const toDept = document.getElementById("qtToDeptSelect").value;
+    const fromDept = k.currentDept;
     const newCarat = parseFloat(document.getElementById("qtCaratVal").value);
     const newNang = parseInt(document.getElementById("qtNangVal").value);
     const newVigat = document.getElementById("qtVigat").value.trim();
 
-    const targetConfig = state.deptConfigs[toDept] || {};
     let customValText = "";
-    if (targetConfig && targetConfig.customHeader) {
+    let customHeaderName = "";
+    let isReq = false;
+
+    if (fromDept === "Galaxy" && toDept === "AP OK") {
+      customHeaderName = "Rough to Polish %";
+      isReq = true;
+    } else if (fromDept === "AP OK" && toDept === "4P") {
+      customHeaderName = "";
+      isReq = false;
+    } else {
+      const transferRule = (state.transferRules || []).find(r => r.from === fromDept && r.to === toDept);
+      customHeaderName = transferRule ? transferRule.customHeader : "";
+      isReq = transferRule ? transferRule.isCompulsory !== false : false;
+    }
+
+    if (customHeaderName) {
       const elVal = document.getElementById("qtCustomVal");
       if (elVal) {
         customValText = elVal.value.trim();
-        if (targetConfig.isCompulsory && !customValText) {
-          alert(`❌ ${targetConfig.customHeader} ભરવું ફરજિયાત છે!`);
+        if (isReq && !customValText) {
+          alert(`❌ ${customHeaderName} ભરવું ફરજિયાત છે!`);
           return;
+        }
+        if (fromDept === "Galaxy" && toDept === "AP OK") {
+          k.r2pPct = parseFloat(customValText) || 0;
         }
       }
     }
 
     let displayVigat = newVigat;
     if (customValText) {
-      displayVigat = `[${targetConfig.customHeader}: ${customValText}] ${newVigat}`;
+      displayVigat = `[${customHeaderName}: ${customValText}] ${newVigat}`;
     }
 
-    const accumVigat = k.vigat ? `${k.vigat} | [${k.currentDept}➔${toDept}]: ${displayVigat || 'OK'}` : `[${k.currentDept}➔${toDept}]: ${displayVigat || 'OK'}`;
+    const accumVigat = k.vigat ? `${k.vigat} | [${fromDept}➔${toDept}]: ${displayVigat || 'OK'}` : `[${fromDept}➔${toDept}]: ${displayVigat || 'OK'}`;
 
     const customDateTime = document.getElementById("qtDateTime").value;
     const transferTimestamp = customDateTime ? new Date(customDateTime).toISOString() : new Date().toISOString();
@@ -1958,7 +2017,7 @@
     state.transfers.unshift({
       id: "TR" + Date.now(),
       kapanNo: k.kapanNo,
-      fromDept: k.currentDept,
+      fromDept: fromDept,
       toDept: toDept,
       prevCarat: k.carat,
       prevNang: k.nang,
@@ -2117,13 +2176,13 @@
       const majuri = isCompleted ? Math.round(polishNang * masterMajRate) : 0;
       const toAmt = isCompleted ? (rafAmt + majuri) : rafAmt;
 
-      const polishCarat = chart ? parseFloat(chart.polishCarat) || 0 : k.polishCarat || 0;
+      const polishCarat = chart ? (parseFloat(chart.polishCarat) || 0) : (isCompleted ? (k.carat || 0) : 0);
       
       const expectedPct = k.r2pPct || 0;
       const achievedPct = (roughWeight > 0 && polishCarat > 0) ? (polishCarat / roughWeight * 100) : 0;
       const variationPct = isCompleted ? (achievedPct - expectedPct) : 0;
       
-      const padtar = (isCompleted && polishCarat > 0) ? Math.round(toAmt / polishCarat) : 0;
+      const padtar = (isCompleted && polishCarat > 0) ? Math.round(Math.round(toAmt / polishCarat) / 10) * 10 : 0;
 
       // Calculate total lost carats and pieces from transfers
       const transfersForKapan = (state.transfers || []).filter(t => t.kapanNo === k.kapanNo);
@@ -2155,6 +2214,11 @@
       const rtPctVal = (k.fourPCt > 0 && k.rtCt > 0) ? (k.rtCt / k.fourPCt * 100) : 0;
       const rToPPctVal = (roughWeight > 0 && polishCarat > 0) ? (polishCarat / roughWeight * 100) : 0;
 
+      const roundedRafAmt = Math.round(rafAmt / 10) * 10;
+      const roundedMajuri = Math.round(majuri / 10) * 10;
+      const roundedToAmt = Math.round(toAmt / 10) * 10;
+      const roundedPadtar = Math.round(padtar / 10) * 10;
+
       return `
         <tr>
           <td>${idx + 1}</td>
@@ -2177,10 +2241,10 @@
           <td>${polishNang || "-"}</td>
           <td>${rToPPctVal > 0 ? rToPPctVal.toFixed(2) + "%" : "-"}</td>
           <td><b>${isCompleted ? (variationPct >= 0 ? "+" : "") + variationPct.toFixed(2) + '%' : '-'}</b></td>
-          <td>₹${Math.round(rafAmt).toLocaleString()}</td>
-          <td>₹${Math.round(majuri).toLocaleString()}</td>
-          <td><b>₹${Math.round(toAmt).toLocaleString()}</b></td>
-          <td><b>₹${padtar.toLocaleString()}</b></td>
+          <td>₹${roundedRafAmt.toLocaleString()}</td>
+          <td>₹${roundedMajuri.toLocaleString()}</td>
+          <td><b>₹${roundedToAmt.toLocaleString()}</b></td>
+          <td><b>₹${roundedPadtar.toLocaleString()}</b></td>
           <td style="color:var(--danger); font-weight:700;">${totalCaratLoss > 0 ? `-${totalCaratLoss.toFixed(2)} Cts` : "-"}</td>
           <td style="color:var(--danger); font-weight:700;">${totalNangLoss > 0 ? `-${totalNangLoss} Pcs` : "-"}</td>
           <td>${commentsHtml}</td>
@@ -2291,13 +2355,12 @@
       const varPct = achievedPct - reqWeightPct;
       document.getElementById("pcVarPct").value = varPct.toFixed(2);
       
-      // Update weight formula to represent Variation Carats * Rough Rate
-      const expectedCarats = rWeight * (reqWeightPct / 100);
-      const varCarats = polishCarat - expectedCarats;
+      // Update pcRSize automatically
+      document.getElementById("pcRSize").value = (polishNang / rWeight).toFixed(2);
       
       const weightAuto = document.getElementById("pcWeightFormula").getAttribute("data-auto") === "true";
       if (weightAuto) {
-        document.getElementById("pcWeightFormula").value = varCarats.toFixed(2) + " * " + Math.round(roughBhav);
+        document.getElementById("pcWeightFormula").value = rWeight.toFixed(2) + " * " + Math.round(roughBhav);
       }
     }
     
@@ -2339,13 +2402,14 @@
     document.getElementById("pcShading").value = chart.shading || "";
     
     // Load assortment table values
-    document.getElementById("pcTableAssort").value = chart.tableAssort || "";
-    document.getElementById("pcTableGlx").value = chart.tableGlx || "";
-    document.getElementById("pcTable4P").value = chart.table4P || "";
-    document.getElementById("pcTableRT").value = chart.tableRT || "";
-    document.getElementById("pcTableReAssort").value = chart.tableReAssort || "";
-    document.getElementById("pcTableKhata").value = chart.tableKhata || "";
-    document.getElementById("pcTableJama").value = chart.tableJama || "";
+    const dDays = getDeptDaysForPolishChart(k.kapanNo);
+    document.getElementById("pcTableAssort").value = chart.tableAssort != null && chart.tableAssort !== "" ? chart.tableAssort : dDays.assort;
+    document.getElementById("pcTableGlx").value = chart.tableGlx != null && chart.tableGlx !== "" ? chart.tableGlx : dDays.galaxy;
+    document.getElementById("pcTable4P").value = chart.table4P != null && chart.table4P !== "" ? chart.table4P : dDays.fourP;
+    document.getElementById("pcTableRT").value = chart.tableRT != null && chart.tableRT !== "" ? chart.tableRT : dDays.rt;
+    document.getElementById("pcTableReAssort").value = chart.tableReAssort != null && chart.tableReAssort !== "" ? chart.tableReAssort : dDays.reAssort;
+    document.getElementById("pcTableKhata").value = chart.tableKhata != null && chart.tableKhata !== "" ? chart.tableKhata : dDays.khata;
+    document.getElementById("pcTableJama").value = chart.tableJama != null && chart.tableJama !== "" ? chart.tableJama : dDays.total;
     document.getElementById("pcTableVigat").value = chart.tableVigat || "";
     document.getElementById("pcTableRaOut").value = chart.tableRaOut || "";
     document.getElementById("pcTablePoHead").value = chart.tablePoHead || "";
@@ -2357,22 +2421,26 @@
     document.getElementById("pcTableRepairPct").value = chart.tableRepairPct || (totalRepairCarats > 0 ? computedRepairPct + "%" : "");
 
     document.getElementById("pcRWeight").value = chart.rWeight || k.carat;
-    const defaultRSize = k.nang > 0 ? ((k.roughWeight || k.carat) / k.nang).toFixed(4) : "0.00";
-    const defaultCardSize = calculateKraftSize(k).toFixed(4);
+    const defaultNang = k.rtNang || k.fourPNang || k.makeablePiece || k.nang;
+    const currentRWeight = chart.rWeight || k.carat;
+    const defaultRSize = currentRWeight > 0 ? (defaultNang / currentRWeight).toFixed(2) : "0.00";
+    const defaultCardSize = calculateKraftSize(k).toFixed(2);
     document.getElementById("pcRSize").value = chart.rSize || defaultRSize;
     document.getElementById("pcCardSize").value = chart.cardSize || defaultCardSize;
-    document.getElementById("pcReqWeightPct").value = chart.reqWeightPct || "";
-    document.getElementById("pcFourPPct").value = chart.fourPPct || "";
-    document.getElementById("pcRTPct").value = chart.rtPct || "";
-    document.getElementById("pcMultPct").value = chart.multPct || "";
-    document.getElementById("pcRToPolishPct").value = chart.rToPolishPct || "";
-    document.getElementById("pcVarPct").value = chart.varPct || "";
+    document.getElementById("pcReqWeightPct").value = chart.reqWeightPct != null ? chart.reqWeightPct : "";
+    document.getElementById("pcFourPPct").value = chart.fourPPct != null ? chart.fourPPct : "";
+    document.getElementById("pcRTPct").value = chart.rtPct != null ? chart.rtPct : "";
+    document.getElementById("pcMultPct").value = chart.multPct != null ? chart.multPct : "";
+    document.getElementById("pcRToPolishPct").value = chart.rToPolishPct != null ? chart.rToPolishPct : (k.r2pPct || 0);
+    document.getElementById("pcVarPct").value = chart.varPct != null ? chart.varPct : 0;
     
     // Setup defaults for Weight and G-Nung
     const masterMajRate = state.majuriRate !== undefined ? state.majuriRate : 65;
-    document.getElementById("pcWeightFormula").value = chart.weightFormula || Math.round(k.carat * (k.roughRate !== undefined ? k.roughRate : (rough ? rough.rate : 2730)));
+    const currentRoughRate = k.roughRate !== undefined ? k.roughRate : (rough ? (rough.rate || 2730) : 2730);
+    const defaultWeightFormulaVal = currentRWeight.toFixed(2) + " * " + Math.round(currentRoughRate);
+    document.getElementById("pcWeightFormula").value = chart.weightFormula || defaultWeightFormulaVal;
     document.getElementById("pcWeightFormula").setAttribute("data-auto", chart.weightFormula ? "false" : "true");
-    document.getElementById("pcGNangFormula").value = chart.gNangFormula || Math.round(k.nang * masterMajRate);
+    document.getElementById("pcGNangFormula").value = chart.gNangFormula || Math.round(defaultNang * masterMajRate);
     document.getElementById("pcGNangFormula").setAttribute("data-auto", chart.gNangFormula ? "false" : "true");
 
     // Load planning details
@@ -2402,14 +2470,16 @@
     document.getElementById("pcGOWTTLB").value = chart.gowttlb || "";
     document.getElementById("pcGTLBLBDB").value = chart.gtlblbdb || "";
 
-    document.getElementById("pcPolishNang").value = chart.polishNang || k.nang;
-    document.getElementById("pcPolishCarat").value = chart.polishCarat || k.carat;
+    document.getElementById("pcPolishNang").value = chart.polishNang || defaultNang;
+    document.getElementById("pcPolishCarat").value = chart.polishCarat || (k.rtCt || k.fourPCt || k.makeableVajan || k.carat);
     document.getElementById("pcPadtar").value = chart.padtar || 0;
     document.getElementById("pcVigat").value = chart.vigat || "";
 
     // Reset manual repair inputs
     document.getElementById("pcManualRepairNang").value = "";
     document.getElementById("pcManualRepairCarat").value = "";
+
+    calculateChartCosting();
   }
 
   function savePolishChart(e) {
@@ -2594,6 +2664,9 @@
       : "-";
 
     const dDays = getDeptDaysForPolishChart(pc.kapanNo);
+    const rToPolishPctDisplay = pc.rToPolishPct != null && pc.rToPolishPct !== "" ? Number(pc.rToPolishPct).toFixed(2) : "";
+    const varPctDisplay = pc.varPct != null && pc.varPct !== "" ? Number(pc.varPct).toFixed(2) : "";
+    const varPctSign = varPctDisplay !== "" ? (Number(varPctDisplay) >= 0 ? "+" : "") : "";
 
     const totalSieve = parseFloat(((pc.s2plus || 0) + (pc.s2minus || 0)).toFixed(2));
     const sumIs100 = Math.abs(totalSieve - 100) < 0.05;
@@ -2662,12 +2735,12 @@
                 <tr><td style="border: 1.5px solid #000; padding: 4px 6px;">કાચું વજન</td><td style="border: 1.5px solid #000; padding: 4px 6px;"><b>${pc.rWeight || ""}</b></td></tr>
                 <tr><td style="border: 1.5px solid #000; padding: 4px 6px;">રફ સાઇઝ</td><td style="border: 1.5px solid #000; padding: 4px 6px;"><b>${pc.rSize || ""}</b></td></tr>
                 <tr><td style="border: 1.5px solid #000; padding: 4px 6px;">ક્રાફ સાઇઝ</td><td style="border: 1.5px solid #000; padding: 4px 6px;"><b>${pc.cardSize || ""}</b></td></tr>
-                <tr><td style="border: 1.5px solid #000; padding: 4px 6px;">માંગેલું વજન %</td><td style="border: 1.5px solid #000; padding: 4px 6px;"><b>${pc.reqWeightPct || ""}%</b></td></tr>
-                <tr><td style="border: 1.5px solid #000; padding: 4px 6px;">4P %</td><td style="border: 1.5px solid #000; padding: 4px 6px;"><b>${pc.fourPPct || ""}%</b></td></tr>
-                <tr><td style="border: 1.5px solid #000; padding: 4px 6px;">RT %</td><td style="border: 1.5px solid #000; padding: 4px 6px;"><b>${pc.rtPct || ""}%</b></td></tr>
-                <tr><td style="border: 1.5px solid #000; padding: 4px 6px;">તૈયાર ગુણાકાર %</td><td style="border: 1.5px solid #000; padding: 4px 6px;"><b>${pc.multPct || ""}%</b></td></tr>
-                <tr><td style="border: 1.5px solid #000; padding: 4px 6px;">રફ TO પોલીસ %</td><td style="border: 1.5px solid #000; padding: 4px 6px;"><b>${pc.rToPolishPct || ""}%</b></td></tr>
-                <tr><td style="border: 1.5px solid #000; padding: 4px 6px;">વેરીએશન %</td><td style="border: 1.5px solid #000; padding: 4px 6px;"><b>${pc.varPct > 0.0001 ? '+' : ''}${pc.varPct || ""}%</b></td></tr>
+                <tr><td style="border: 1.5px solid #000; padding: 4px 6px;">માંગેલું વજન %</td><td style="border: 1.5px solid #000; padding: 4px 6px;"><b>${pc.reqWeightPct != null && pc.reqWeightPct !== "" ? Number(pc.reqWeightPct).toFixed(2) : ""}%</b></td></tr>
+                <tr><td style="border: 1.5px solid #000; padding: 4px 6px;">4P %</td><td style="border: 1.5px solid #000; padding: 4px 6px;"><b>${pc.fourPPct != null && pc.fourPPct !== "" ? Number(pc.fourPPct).toFixed(2) : ""}%</b></td></tr>
+                <tr><td style="border: 1.5px solid #000; padding: 4px 6px;">RT %</td><td style="border: 1.5px solid #000; padding: 4px 6px;"><b>${pc.rtPct != null && pc.rtPct !== "" ? Number(pc.rtPct).toFixed(2) : ""}%</b></td></tr>
+                <tr><td style="border: 1.5px solid #000; padding: 4px 6px;">તૈયાર ગુણાકાર %</td><td style="border: 1.5px solid #000; padding: 4px 6px;"><b>${pc.multPct != null && pc.multPct !== "" ? Number(pc.multPct).toFixed(2) : ""}%</b></td></tr>
+                <tr><td style="border: 1.5px solid #000; padding: 4px 6px;">રફ TO પોલીસ %</td><td style="border: 1.5px solid #000; padding: 4px 6px;"><b>${rToPolishPctDisplay}%</b></td></tr>
+                <tr><td style="border: 1.5px solid #000; padding: 4px 6px;">વેરીએશન %</td><td style="border: 1.5px solid #000; padding: 4px 6px;"><b>${varPctSign}${varPctDisplay}</b></td></tr>
                 <tr><td style="border: 1.5px solid #000; padding: 4px 6px;">વજન</td><td style="border: 1.5px solid #000; padding: 4px 6px;"><b>${pc.weightFormula || ""}</b></td></tr>
                 <tr><td style="border: 1.5px solid #000; padding: 4px 6px;">G - નંગ</td><td style="border: 1.5px solid #000; padding: 4px 6px;"><b>${pc.gNangFormula || ""}</b></td></tr>
               </tbody>
@@ -2724,11 +2797,7 @@
 
         <!-- BOTTOM SECTION -->
         <div style="display:flex; justify-content:space-between; align-items:stretch; gap:10px; margin-top:12px; border-top: 1.5px solid #000; padding-top:10px;">
-          <div style="flex:2; display:grid; grid-template-columns: repeat(3, 1fr); gap:10px;">
-            <div style="border:1.5px solid #000; padding:6px; text-align:center; background:#fff;">
-              <b>પોલિશ નંગ (Pcs)</b><br>
-              <div style="font-size:18px; font-weight:900;">${pc.polishNang || pc.gNangFormula || 0} Pcs</div>
-            </div>
+          <div style="flex:2; display:grid; grid-template-columns: repeat(2, 1fr); gap:10px;">
             <div style="border:1.5px solid #000; padding:6px; text-align:center; background:#fff;">
               <b>પોલિશ વજન (Cts)</b><br>
               <div style="font-size:18px; font-weight:900;">${pc.polishCarat || 0} Cts</div>
@@ -3208,6 +3277,64 @@
 
   function completeRepair(id) {
     openReceiveRepairModal(id);
+  }
+
+  function openReceiveRepairModal(repairId) {
+    const r = (state.repairs || []).find(x => x.id === repairId);
+    if (!r) return;
+
+    const modalId = document.getElementById("rrRepairId");
+    const infoBadge = document.getElementById("rrInfoBadge");
+    const caratVal = document.getElementById("rrCaratVal");
+    const nangVal = document.getElementById("rrNangVal");
+    const commentInput = document.getElementById("rrComment");
+
+    if (modalId) modalId.value = r.id;
+    if (infoBadge) infoBadge.innerText = `કાપણ: ${r.kapanNo} | મોકલેલ: ${r.carat} Cts | ${r.nang} નંગ`;
+    if (caratVal) caratVal.value = r.carat;
+    if (nangVal) nangVal.value = r.nang;
+    if (commentInput) commentInput.value = "";
+
+    const modal = document.getElementById("receiveRepairModal");
+    if (modal) modal.style.display = "flex";
+  }
+
+  function closeReceiveRepairModal() {
+    const modal = document.getElementById("receiveRepairModal");
+    if (modal) modal.style.display = "none";
+  }
+
+  function submitReceiveRepair(e) {
+    e.preventDefault();
+    const repairId = document.getElementById("rrRepairId").value;
+    const recC = parseFloat(document.getElementById("rrCaratVal").value) || 0;
+    const recN = parseInt(document.getElementById("rrNangVal").value) || 0;
+    const comment = document.getElementById("rrComment").value.trim();
+
+    const r = (state.repairs || []).find(x => x.id === repairId);
+    if (!r) return;
+
+    r.status = "Completed";
+    r.receivedDate = new Date().toISOString();
+    r.receivedCarat = recC;
+    r.receivedNang = recN;
+    r.receivedComment = comment;
+
+    const k = (state.kapans || []).find(x => x.kapanNo === r.kapanNo);
+    if (k) {
+      k.status = "Chalu";
+      k.carat = recC;
+      k.nang = recN;
+      
+      const newVigat = `[Repair received: ${comment}]`;
+      k.vigat = k.vigat ? `${k.vigat} | ${newVigat}` : newVigat;
+      k.lastMovedDate = new Date().toISOString();
+    }
+
+    saveState();
+    closeReceiveRepairModal();
+    renderAll();
+    showToast("📥 રીપેરીંગ સફળતાપૂર્વક સ્વીકારવામાં આવ્યું!");
   }
 
   // STOCK MASTER RULES CONFIGURATION
