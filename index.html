@@ -1625,6 +1625,17 @@
         </div>
       </div>
 
+      <div class="form-grid" style="margin-top: 12px; margin-bottom: 12px;">
+        <div>
+          <label>મોકલવા માટેનું વજન (Carats) <span class="req-star">*</span></label>
+          <input type="number" id="qtCaratVal" step="0.01" min="0" required placeholder="વજન લખો" style="width:100%; font-weight:700; padding:8px 12px; border-radius:6px; border:1.5px solid #cbd5e1; outline:none;">
+        </div>
+        <div>
+          <label>મોકલવા માટેના નંગ (Pieces) <span class="req-star">*</span></label>
+          <input type="number" id="qtNangVal" min="0" required placeholder="નંગ લખો" style="width:100%; font-weight:700; padding:8px 12px; border-radius:6px; border:1.5px solid #cbd5e1; outline:none;">
+        </div>
+      </div>
+
       <!-- Fully dynamic inputs container based on department configurations -->
       <div id="qtDynamicInputsContainer"></div>
 
@@ -3707,15 +3718,15 @@
       toDept: toDept,
       prevCarat: k.carat,
       prevNang: k.nang,
-      carat: nextCarat,
-      nang: nextNang,
-      vigat: transferVigat,
+      carat: newCarat,
+      nang: newNang,
+      vigat: displayVigat,
       timestamp: transferTimestamp
     });
 
     k.currentDept = toDept;
-    k.carat = nextCarat;
-    k.nang = nextNang;
+    k.carat = newCarat;
+    k.nang = newNang;
     k.vigat = accumVigat;
     k.lastMovedDate = transferTimestamp;
     if (toDept === "OK KAPAN (ઓકે કાપણ)") {
