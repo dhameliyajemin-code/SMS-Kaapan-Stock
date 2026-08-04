@@ -5470,7 +5470,7 @@
         roughLots: [], kapans: [], transfers: [], repairs: [], audits: [], polishCharts: [], transferRules: [],
         depts: [...DEPTS], deptConfigs: {}, autoLogoutHours: 11, firebaseConfig: { apiKey: "AIzaSyDvu7pJMXatKNHFAuJMtsh_zpmb8Jr0BCM", dbUrl: "https://ng-cost-default-rtdb.firebaseio.com", projectId: "ng-cost" }, firebaseWiped: false
       };
-      if (dbRef) dbRef.set(state);
+      if (dbRef) dbRef.set(state).catch(e => console.error('Reset sync failed:', e));
       checkInitialData();
       renderAll();
       showToast("સિસ્ટમ ડેટા રીસેટ થયો!", "warning");
@@ -5493,7 +5493,7 @@
         roughLots: [], kapans: [], transfers: [], repairs: [], audits: [], polishCharts: [], transferRules: [],
         depts: [...DEPTS], deptConfigs: {}, autoLogoutHours: 11, firebaseConfig: { apiKey: "AIzaSyDvu7pJMXatKNHFAuJMtsh_zpmb8Jr0BCM", dbUrl: "https://ng-cost-default-rtdb.firebaseio.com", projectId: "ng-cost" }, firebaseWiped: false
       };
-      if (dbRef) dbRef.set(state);
+      if (dbRef) dbRef.set(state).catch(e => console.error('Reset sync failed:', e));
       checkInitialData();
       renderAll();
       showToast("તમામ ડેટા સફળતાપૂર્વક સાફ કરવામાં આવ્યો છે (Wiped)!", "danger");
