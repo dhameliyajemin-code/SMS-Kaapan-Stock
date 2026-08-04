@@ -1817,6 +1817,7 @@
       <div style="font-size:12px; color:#1e40af; background:#eff6ff; padding:8px 12px; border-radius:6px; border:1px solid #bfdbfe; margin-bottom:14px; font-weight:600;">
         💡 <b>ટીપ:</b> ખાના બદલવા માટે <b>Enter</b> દબાવો, સેવ કરવા માટે <b>Ctrl + S</b> અને બંધ કરવા <b>Esc</b> દબાવો.
       </div>
+      
       <!-- Searchable Dropdown for Rough selection (Rough No.) -->
       <div style="margin-bottom: 16px; position: relative;">
         <label style="font-weight: 700; color: #334155; margin-bottom:6px; display:block;">Rough No. <span class="req-star">*</span></label>
@@ -1824,9 +1825,10 @@
           <span id="roughSelectVal" style="color:#64748b; font-weight:500;">Select Group...</span>
           <span style="background:#1e3a8a; color:#fff; width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:4px; font-size:11px;">▼</span>
         </div>
+        <input type="hidden" id="akRoughId">
         
         <!-- Options Panel -->
-        <div class="custom-select-options" id="roughSelectOptions" style="display:none; width:100%; box-shadow:0 10px 25px rgba(0,0,0,0.15); border:1px solid #cbd5e1; background:#fff; border-radius:6px; margin-top:4px;">
+        <div class="custom-select-options" id="roughSelectOptions" style="display:none; width:100%; box-shadow:0 10px 25px rgba(0,0,0,0.15); border:1px solid #cbd5e1; background:#fff; border-radius:6px; margin-top:4px; z-index: 10;">
           <div style="padding: 10px; border-bottom: 1px solid #f1f5f9; background: #f8fafc;">
             <label style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase;">Search Name</label>
             <input type="text" id="roughSearchInput" placeholder="Type name/number here..." oninput="filterRoughOptions(this.value)" onclick="event.stopPropagation()" style="width: 100%; padding: 8px 12px; border-radius: 4px; border: 1.5px solid #cbd5e1; outline: none; margin-top:4px; font-size:13.5px;">
@@ -1834,8 +1836,34 @@
           <div style="padding: 10px; border-bottom: 1px solid #f1f5f9;">
             <a href="#" onclick="triggerQuickAddRough(event)" style="color: #059669; font-weight: 700; font-size: 13px; text-decoration: none; display: flex; align-items: center; gap: 4px;">
               ➕ + Add New Group
-          <input type="number" id="akNang" required placeholder="દા.ત. 1500" style="width:100%; border:1.5px solid #cbd5e1; border-radius:6px; height:45px; padding:0 12px; outline:none; font-weight:600;">
+            </a>
+          </div>
+          <div id="roughSelectOptionsList" style="max-height: 150px; overflow-y: auto;"></div>
         </div>
+      </div>
+
+      <!-- Kapan No -->
+      <div style="margin-bottom: 16px;">
+        <label style="font-weight: 700; color: #334155; margin-bottom:6px; display:block;">કાપણ નંબર (Kapan No.) <span class="req-star">*</span></label>
+        <input type="text" id="akKapanNo" required placeholder="દા.ત. M-1-124" style="width:100%; border:1.5px solid #cbd5e1; border-radius:6px; height:45px; padding:0 12px; outline:none; font-weight:600;">
+      </div>
+
+      <!-- Rough Rate (Editable, defaults to selected rough rate) -->
+      <div style="margin-bottom: 16px;">
+        <label style="font-weight: 700; color: #334155; margin-bottom:6px; display:block;">રફ ભાવ (Rough Rate/Ct) <span class="req-star">*</span></label>
+        <input type="number" id="akRoughRate" step="0.01" min="0" required placeholder="દા.ત. 2730" style="width:100%; border:1.5px solid #cbd5e1; border-radius:6px; height:45px; padding:0 12px; outline:none; font-weight:600;">
+      </div>
+
+      <!-- Carat -->
+      <div style="margin-bottom: 16px;">
+        <label style="font-weight: 700; color: #334155; margin-bottom:6px; display:block;">વજન (Carat) <span class="req-star">*</span></label>
+        <input type="number" id="akCarat" step="0.01" min="0" required placeholder="દા.ત. 97.88" style="width:100%; border:1.5px solid #cbd5e1; border-radius:6px; height:45px; padding:0 12px; outline:none; font-weight:600;">
+      </div>
+
+      <!-- Nang -->
+      <div style="margin-bottom: 16px;">
+        <label style="font-weight: 700; color: #334155; margin-bottom:6px; display:block;">નંગ (Pieces) <span class="req-star">*</span></label>
+        <input type="number" id="akNang" required placeholder="દા.ત. 1500" style="width:100%; border:1.5px solid #cbd5e1; border-radius:6px; height:45px; padding:0 12px; outline:none; font-weight:600;">
       </div>
 
       <!-- Tag selector -->
@@ -2137,8 +2165,16 @@
     if (saved) {
       try { 
         const parsed = JSON.parse(saved) || {};
+        let authObj = parsed.auth || {};
+        if (authObj.adminPass || authObj.stockPass || authObj.editPassword || !authObj.adminPassHash) {
+          authObj = {
+            adminPassHash: "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+            stockPassHash: "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+            editPassHash: "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3"
+          };
+        }
         state = {
-          auth: parsed.auth || { adminPassHash: "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3", stockPassHash: "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3", editPassHash: "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3" },
+          auth: authObj,
           majuriRate: parsed.majuriRate !== undefined ? parsed.majuriRate : 65,
           roughLots: parsed.roughLots || [],
           kapans: parsed.kapans || [],
@@ -2395,7 +2431,7 @@
     let chart = (state.polishCharts || []).find(pc => pc && pc.kapanNo === k.kapanNo);
     if (!chart) {
       const rough = (state.roughLots || []).find(r => r.id === k.roughId);
-      const roughRate = rough ? (rough.rate || 2730) : 2730;
+      const roughRate = k.roughRate !== undefined ? k.roughRate : (rough ? (rough.rate || 2730) : 2730);
       const roughWeight = k.roughWeight || k.carat;
       const masterMajRate = state.majuriRate !== undefined ? state.majuriRate : 65;
       
@@ -2991,6 +3027,7 @@
     document.getElementById("akNang").value = "";
     document.getElementById("akVigat").value = "";
     document.getElementById("akRoughId").value = "";
+    document.getElementById("akRoughRate").value = "";
     document.getElementById("roughSelectVal").innerText = "Select Group...";
     document.getElementById("roughSelectVal").style.color = "#64748b";
     
@@ -3050,6 +3087,13 @@
     const valText = document.getElementById("roughSelectVal");
     valText.innerText = roughName;
     valText.style.color = "#0f172a";
+    
+    // Auto populate default rough rate
+    const rough = (state.roughLots || []).find(r => r.id === roughId);
+    if (rough) {
+      document.getElementById("akRoughRate").value = rough.rate || 2730;
+    }
+    
     document.getElementById("roughSelectOptions").style.display = "none";
   }
 
@@ -3104,6 +3148,7 @@
     e.preventDefault();
     const roughId = document.getElementById("akRoughId").value;
     const kapanNo = document.getElementById("akKapanNo").value.trim();
+    const roughRate = parseFloat(document.getElementById("akRoughRate").value) || 2730;
     const carat = parseFloat(document.getElementById("akCarat").value);
     const nang = parseInt(document.getElementById("akNang").value);
     const tag = document.getElementById("akTag").value;
@@ -3730,7 +3775,7 @@
     tbody.innerHTML = list.map((k, idx) => {
       const rough = (state.roughLots || []).find(r => r.id === k.roughId);
       const rName = rough ? rough.name : "હવા";
-      const rate = rough ? (rough.rate || 2730) : 2730;
+      const rate = k.roughRate !== undefined ? k.roughRate : (rough ? (rough.rate || 2730) : 2730);
       const roughWeight = k.roughWeight || k.carat;
       const totalRoughCarats = rough ? (rough.carats || roughWeight) : roughWeight;
       const rafAmt = rough ? (rough.finalRoughAmt ? (rough.finalRoughAmt * (roughWeight / totalRoughCarats)) : (roughWeight * rate)) : 0;
@@ -3995,7 +4040,7 @@
     
     // Setup defaults for Weight and G-Nung
     const masterMajRate = state.majuriRate !== undefined ? state.majuriRate : 65;
-    document.getElementById("pcWeightFormula").value = chart.weightFormula || Math.round(k.carat * (rough ? rough.rate : 2730));
+    document.getElementById("pcWeightFormula").value = chart.weightFormula || Math.round(k.carat * (k.roughRate !== undefined ? k.roughRate : (rough ? rough.rate : 2730)));
     document.getElementById("pcWeightFormula").setAttribute("data-auto", chart.weightFormula ? "false" : "true");
     document.getElementById("pcGNangFormula").value = chart.gNangFormula || Math.round(k.nang * masterMajRate);
     document.getElementById("pcGNangFormula").setAttribute("data-auto", chart.gNangFormula ? "false" : "true");
