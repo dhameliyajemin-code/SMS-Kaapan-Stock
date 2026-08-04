@@ -1456,21 +1456,28 @@
           <div class="box-title">🔑 પાસવર્ડ માસ્ટર સેટિંગ્સ (Admin Password Master)</div>
         </div>
         <form onsubmit="updateCredentials(event)">
+          <div style="font-size:12px; color:#1e40af; background:#eff6ff; padding:8px 12px; border-radius:6px; border:1px solid #bfdbfe; margin-bottom:14px; font-weight:600;">
+            💡 <b>પાસવર્ડ બદલવાની રીત:</b> કોઈપણ પાસવર્ડ બદલવા માટે તમારો <b>વર્તમાન એડમિન પાસવર્ડ</b> લખવો ફરજિયાત છે. તમે જે પાસવર્ડ બદલવા માંગો છો ફક્ત તેમાં જ નવો પાસવર્ડ લખો, બાકીના ખાલી છોડી શકો છો.
+          </div>
           <div class="form-grid">
-            <div>
-              <label>એડમિન પાસવર્ડ <span class="req-star">*</span></label>
-              <input type="password" id="admAdminPass" required>
+            <div style="grid-column: span 3; margin-bottom: 8px;">
+              <label style="font-weight: 700; color: #dc2626;">વર્તમાન એડમિન પાસવર્ડ (Current Admin Password) <span class="req-star">*</span></label>
+              <input type="password" id="admCurrentPass" required style="border: 1.5px solid #f87171; height:40px;" placeholder="તમારો ચાલુ એડમિન પાસવર્ડ અહીં લખો">
             </div>
             <div>
-              <label>સ્ટોક પાસવર્ડ <span class="req-star">*</span></label>
-              <input type="password" id="admStockPass" required>
+              <label>નવો એડમિન પાસવર્ડ (New Admin Password)</label>
+              <input type="password" id="admAdminPass" style="height:40px;">
             </div>
             <div>
-              <label>એડિટ/ડીલીટ પાસવર્ડ <span class="req-star">*</span></label>
-              <input type="password" id="admEditPass" required>
+              <label>નવો સ્ટોક પાસવર્ડ (New Stock Password)</label>
+              <input type="password" id="admStockPass" style="height:40px;">
             </div>
-            <div style="display: flex; align-items: flex-end;">
-              <button type="submit" class="btn btn-purple" style="width: 100%;">💾 સેવ કરો</button>
+            <div>
+              <label>નવો એડિટ/ડીલીટ પાસવર્ડ (New Edit Password)</label>
+              <input type="password" id="admEditPass" style="height:40px;">
+            </div>
+            <div style="display: flex; align-items: flex-end; grid-column: span 3; margin-top: 10px;">
+              <button type="submit" class="btn btn-purple" style="width: 100%; font-weight: 700; height: 42px;">💾 પાસવર્ડ સેવ કરો (Save Passwords)</button>
             </div>
           </div>
         </form>
@@ -2086,6 +2093,7 @@
               if (!state.repairs) state.repairs = [];
               if (!state.audits) state.audits = [];
               if (!state.polishCharts) state.polishCharts = [];
+              if (!state.deptConfigs) state.deptConfigs = {};
               saveState();
               renderAll();
             }
@@ -2105,6 +2113,7 @@
             if (!state.repairs) state.repairs = [];
             if (!state.audits) state.audits = [];
             if (!state.polishCharts) state.polishCharts = [];
+            if (!state.deptConfigs) state.deptConfigs = {};
             saveState();
             renderAll();
           }
@@ -2201,6 +2210,7 @@
   }
 
   function saveState() {
+    if (!state.deptConfigs) state.deptConfigs = {};
     state.depts = [...DEPTS];
     DEPTS.forEach(d => {
       if (!state.deptConfigs[d]) {
@@ -5410,22 +5420,45 @@
 
   async function updateCredentials(e) {
     e.preventDefault();
+    const currentP = document.getElementById("admCurrentPass").value.trim();
     const adminP = document.getElementById("admAdminPass").value.trim();
     const stockP = document.getElementById("admStockPass").value.trim();
     const editP = document.getElementById("admEditPass").value.trim();
 
-    if (adminP) state.auth.adminPassHash = await sha256(adminP);
-    if (stockP) state.auth.stockPassHash = await sha256(stockP);
-    if (editP) state.auth.editPassHash = await sha256(editP);
+    // Verify current admin password first
+    const currentPHash = await sha256(currentP);
+    if (currentPHash !== state.auth.adminPassHash) {
+      alert("❌ વર્તમાન એડમિન પાસવર્ડ ખોટો છે! પાસવર્ડ બદલી શકાયો નથી.");
+      return;
+    }
 
-    // Clean old plain-text fields for security
-    delete state.auth.adminPass;
-    delete state.auth.stockPass;
-    delete state.auth.editPassword;
+    let changed = false;
+    if (adminP) {
+      state.auth.adminPassHash = await sha256(adminP);
+      changed = true;
+    }
+    if (stockP) {
+      state.auth.stockPassHash = await sha256(stockP);
+      changed = true;
+    }
+    if (editP) {
+      state.auth.editPassHash = await sha256(editP);
+      changed = true;
+    }
 
-    saveState();
-    showToast("🔑 લોગિન અને પાસવર્ડ વિગતો સફળતાપૂર્વક અપડેટ થઈ ગઈ!");
+    if (changed) {
+      // Clean old plain-text fields for security
+      delete state.auth.adminPass;
+      delete state.auth.stockPass;
+      delete state.auth.editPassword;
 
+      saveState();
+      showToast("🔑 પાસવર્ડ સફળતાપૂર્વક અપડેટ થઈ ગયો!");
+    } else {
+      showToast("ℹ️ કોઈ નવો પાસવર્ડ લખવામાં આવ્યો નથી.", "warning");
+    }
+
+    document.getElementById("admCurrentPass").value = "";
     document.getElementById("admAdminPass").value = "";
     document.getElementById("admStockPass").value = "";
     document.getElementById("admEditPass").value = "";
