@@ -85,7 +85,7 @@
       return;
     }
 
-    const k = state.kapans.find(x => x.kapanNo.toLowerCase() === q || x.kapanNo.toLowerCase().includes(q));
+    const k = (state.kapans || []).find(x => x.kapanNo.toLowerCase() === q || x.kapanNo.toLowerCase().includes(q));
     if (!k) {
       resultBox.style.display = "block";
       resultBox.innerHTML = `
@@ -96,8 +96,8 @@
       return;
     }
 
-    const rough = state.roughLots.find(r => r.id === k.roughId);
-    const chart = state.polishCharts.find(pc => pc.kapanNo.toLowerCase() === k.kapanNo.toLowerCase());
+    const rough = (state.roughLots || []).find(r => r.id === k.roughId);
+    const chart = (state.polishCharts || []).find(pc => pc.kapanNo.toLowerCase() === k.kapanNo.toLowerCase());
 
     resultBox.style.display = "block";
 
@@ -203,7 +203,7 @@
   }
 
   function editPolishChartFromDialer(kapanId) {
-    const k = state.kapans.find(x => x.id === kapanId);
+    const k = (state.kapans || []).find(x => x.id === kapanId);
     if (!k) return;
     
     const selectEl = document.getElementById("pcKapanSelect");
@@ -241,7 +241,7 @@
   }
 
   function goToApproveChart(kapanId) {
-    const k = state.kapans.find(x => x.id === kapanId);
+    const k = (state.kapans || []).find(x => x.id === kapanId);
     if (!k) return;
     
     // Switch to Polish Chart view page
@@ -2080,6 +2080,12 @@
             const val = snapshot.val();
             if (val) {
               state = val;
+              if (!state.kapans) state.kapans = [];
+              if (!state.roughLots) state.roughLots = [];
+              if (!state.transfers) state.transfers = [];
+              if (!state.repairs) state.repairs = [];
+              if (!state.audits) state.audits = [];
+              if (!state.polishCharts) state.polishCharts = [];
               saveState();
               renderAll();
             }
@@ -2093,6 +2099,12 @@
           const val = snapshot.val();
           if (val && JSON.stringify(val) !== JSON.stringify(state)) {
             state = val;
+            if (!state.kapans) state.kapans = [];
+            if (!state.roughLots) state.roughLots = [];
+            if (!state.transfers) state.transfers = [];
+            if (!state.repairs) state.repairs = [];
+            if (!state.audits) state.audits = [];
+            if (!state.polishCharts) state.polishCharts = [];
             saveState();
             renderAll();
           }
@@ -2368,9 +2380,9 @@
   }
 
   function ensureDraftPolishChart(k) {
-    let chart = state.polishCharts.find(pc => pc && pc.kapanNo === k.kapanNo);
+    let chart = (state.polishCharts || []).find(pc => pc && pc.kapanNo === k.kapanNo);
     if (!chart) {
-      const rough = state.roughLots.find(r => r.id === k.roughId);
+      const rough = (state.roughLots || []).find(r => r.id === k.roughId);
       const roughRate = rough ? (rough.rate || 2730) : 2730;
       const roughWeight = k.roughWeight || k.carat;
       const masterMajRate = state.majuriRate !== undefined ? state.majuriRate : 65;
@@ -2589,7 +2601,7 @@
   function renderRoughDropdowns() {
     const adSel = document.getElementById("adKRough");
     if (adSel) {
-      adSel.innerHTML = state.roughLots.map(r => `<option value="${r.id}">${r.name} (${r.party} - ${r.carats} Cts)</option>`).join("");
+      adSel.innerHTML = (state.roughLots || []).map(r => `<option value="${r.id}">${r.name} (${r.party} - ${r.carats} Cts)</option>`).join("");
     }
   }
 
@@ -2638,14 +2650,14 @@
     const totalRoughCts = state.roughLots.reduce((s, r) => s + Number(r.carats), 0).toFixed(2);
     
     // Filter kapans currently in pipeline (not completed)
-    const pipelineKapans = state.kapans.filter(k => k.currentDept !== "OK KAPAN (ઓકે કાપણ)");
+    const pipelineKapans = (state.kapans || []).filter(k => k.currentDept !== "OK KAPAN (ઓકે કાપણ)");
     const pipelineNung = pipelineKapans.reduce((s, k) => s + Number(k.nang || 0), 0);
     const pipelineCarats = pipelineKapans.reduce((s, k) => s + Number(k.carat || 0), 0);
 
     // Filter kapans that are completed and have an Approved Polish Chart
-    const approvedKapans = state.kapans.filter(k => {
+    const approvedKapans = (state.kapans || []).filter(k => {
       const isCompleted = k.currentDept === "OK KAPAN (ઓકે કાપણ)";
-      const chart = state.polishCharts.find(pc => pc.kapanNo === k.kapanNo && pc.status === "Approved");
+      const chart = (state.polishCharts || []).find(pc => pc.kapanNo === k.kapanNo && pc.status === "Approved");
       return isCompleted && chart;
     });
     const approvedNung = approvedKapans.reduce((s, k) => s + Number(k.nang || 0), 0);
@@ -2659,7 +2671,7 @@
 
     const grid = document.getElementById("adminStickerGrid");
     grid.innerHTML = DEPTS.map(dept => {
-      const deptsKapans = state.kapans.filter(k => k.currentDept === dept);
+      const deptsKapans = (state.kapans || []).filter(k => k.currentDept === dept);
       const totalNung = deptsKapans.reduce((sum, k) => sum + Number(k.nang || 0), 0);
 
       return `
@@ -2688,14 +2700,14 @@
 
     const filteredRoughs = state.roughLots.filter(r => {
       if (!query) return true;
-      const linked = state.kapans.filter(k => k.roughId === r.id);
+      const linked = (state.kapans || []).filter(k => k.roughId === r.id);
       const matchesKapan = linked.some(k => isMatchSearch(k.kapanNo, query));
       return r.name.toLowerCase().includes(query.toLowerCase()) || r.party.toLowerCase().includes(query.toLowerCase()) || matchesKapan;
     });
 
     state.roughLots.forEach(r => {
       const purchased = Number(r.carats || 0);
-      const linked = state.kapans.filter(k => k.roughId === r.id);
+      const linked = (state.kapans || []).filter(k => k.roughId === r.id);
       const manufactured = linked.reduce((sum, k) => sum + Number(k.carat || 0), 0);
       
       const polish = linked
@@ -2746,7 +2758,7 @@
       } else {
         tbody.innerHTML = filteredRoughs.map(r => {
           const purchased = Number(r.carats || 0);
-          const linked = state.kapans.filter(k => k.roughId === r.id);
+          const linked = (state.kapans || []).filter(k => k.roughId === r.id);
           const manufactured = linked.reduce((sum, k) => sum + Number(k.carat || 0), 0);
           const polish = linked
             .filter(k => k.currentDept === "OK KAPAN (ઓકે કાપણ)")
@@ -2811,7 +2823,7 @@
     let grandKapan = 0;
 
     let html = DEPTS.map((dept, index) => {
-      const deptsKapans = state.kapans.filter(k => k.currentDept === dept);
+      const deptsKapans = (state.kapans || []).filter(k => k.currentDept === dept);
       const totalNung = deptsKapans.reduce((sum, k) => sum + Number(k.nang || 0), 0);
       const totalCarat = deptsKapans.reduce((sum, k) => sum + Number(k.carat || 0), 0);
       const totalKapan = deptsKapans.length;
@@ -2922,7 +2934,7 @@
       return;
     }
 
-    const duplicate = state.kapans.find(k => k.kapanNo.toLowerCase() === kapanNo.toLowerCase());
+    const duplicate = (state.kapans || []).find(k => k.kapanNo.toLowerCase() === kapanNo.toLowerCase());
     if (duplicate) {
       alert("❌ આ કાપણ નંબર પહેલેથી જ અસ્તિત્વમાં છે!");
       return;
@@ -3014,7 +3026,7 @@
       return;
     }
 
-    listContainer.innerHTML = state.roughLots.map(r => `
+    listContainer.innerHTML = (state.roughLots || []).map(r => `
       <div class="custom-option-item" data-name="${r.name.toLowerCase()}" onclick="selectRoughOption('${r.id}', '${r.name}')">
         ${r.name} (${r.party} - ${r.carats} Cts)
       </div>
@@ -3049,7 +3061,7 @@
     const name = prompt("નવા રફ લોટનું નામ/કોડ લખો:");
     if (!name || !name.trim()) return;
     
-    const duplicate = state.roughLots.find(r => r.name.toLowerCase() === name.trim().toLowerCase());
+    const duplicate = (state.roughLots || []).find(r => r.name.toLowerCase() === name.trim().toLowerCase());
     if (duplicate) {
       alert("❌ આ નામનો રફ લોટ પહેલેથી જ અસ્તિત્વમાં છે!");
       return;
@@ -3095,7 +3107,7 @@
       return;
     }
 
-    const duplicate = state.kapans.find(k => k.kapanNo.toLowerCase() === kapanNo.toLowerCase());
+    const duplicate = (state.kapans || []).find(k => k.kapanNo.toLowerCase() === kapanNo.toLowerCase());
     if (duplicate) {
       alert("❌ આ કાપણ નંબર પહેલેથી જ અસ્તિત્વમાં છે!");
       return;
@@ -3254,10 +3266,10 @@
     const tbody = document.getElementById("sampleTableBody");
     if (!tbody) return;
 
-    const samples = state.kapans.filter(k => k.tag === "Sample");
+    const samples = (state.kapans || []).filter(k => k.tag === "Sample");
     tbody.innerHTML = samples.map(k => {
-      const rough = state.roughLots.find(r => r.id === k.roughId);
-      const transfersForKapan = state.transfers.filter(t => t.kapanNo === k.kapanNo);
+      const rough = (state.roughLots || []).find(r => r.id === k.roughId);
+      const transfersForKapan = (state.transfers || []).filter(t => t.kapanNo === k.kapanNo);
       
       const commentsHtml = `
         <details style="cursor: pointer; font-size: 11px; outline: none; border: none; margin-top:4px;">
@@ -3297,7 +3309,7 @@
 
   function updateSampleTracking(id) {
     const val = document.getElementById("tr_" + id).value;
-    const k = state.kapans.find(x => x.id === id);
+    const k = (state.kapans || []).find(x => x.id === id);
     if (k) {
       k.vehicleTracking = val;
       saveState();
@@ -3312,7 +3324,7 @@
     const currentFilter = document.getElementById("dashDeptFilter")?.value || "";
 
     grid.innerHTML = DEPTS.map(dept => {
-      const deptsKapans = state.kapans.filter(k => k.currentDept === dept && k.status !== "In-Repair");
+      const deptsKapans = (state.kapans || []).filter(k => k.currentDept === dept && k.status !== "In-Repair");
       const totalNung = deptsKapans.reduce((sum, k) => sum + Number(k.nang || 0), 0);
       const isActive = dept === currentFilter ? "active" : "";
 
@@ -3362,8 +3374,8 @@
     const tagFilter = tagFilterEl ? tagFilterEl.value : "";
     const tbody = document.getElementById("dashTableBody");
 
-    let list = state.kapans.filter(k => {
-      const rough = state.roughLots.find(r => r.id === k.roughId);
+    let list = (state.kapans || []).filter(k => {
+      const rough = (state.roughLots || []).find(r => r.id === k.roughId);
       const roughName = rough ? rough.name.toLowerCase() : "";
       const matchesSearch = isMatchSearch(k.kapanNo, query) || roughName.includes(query.toLowerCase());
       const matchesDept = !dept || k.currentDept === dept;
@@ -3393,7 +3405,7 @@
     });
 
     tbody.innerHTML = list.map(k => {
-      const rough = state.roughLots.find(r => r.id === k.roughId);
+      const rough = (state.roughLots || []).find(r => r.id === k.roughId);
       const duration = getTimeDuration(k.lastMovedDate || k.createdDate);
       const overdueClass = isOverdue(k.lastMovedDate || k.createdDate) ? "overdue-kapan" : "";
       const tagClass = k.tag === "Urgent" ? "tag-urgent" : (k.tag === "Sample" ? "tag-sample" : "tag-regular");
@@ -3446,7 +3458,7 @@
   }
 
   function updateKapanTag(id, newTag) {
-    const k = state.kapans.find(x => x.id === id);
+    const k = (state.kapans || []).find(x => x.id === id);
     if (k) {
       const oldTag = k.tag;
       k.tag = newTag;
@@ -3467,7 +3479,7 @@
 
   // 1-CLICK QUICK TRANSFER POPUP MODAL
   function openQuickTransferModal(id) {
-    const k = state.kapans.find(x => x.id === id);
+    const k = (state.kapans || []).find(x => x.id === id);
     if (!k) return;
 
     document.getElementById("qtKapanId").value = k.id;
@@ -3501,7 +3513,7 @@
 
   function updateQtCustomFields() {
     const kId = document.getElementById("qtKapanId").value;
-    const k = state.kapans.find(x => x.id === kId);
+    const k = (state.kapans || []).find(x => x.id === kId);
     if (!k) return;
 
     const toDept = document.getElementById("qtToDeptSelect").value;
@@ -3525,7 +3537,7 @@
   function submitQuickTransfer(e) {
     e.preventDefault();
     const id = document.getElementById("qtKapanId").value;
-    const k = state.kapans.find(x => x.id === id);
+    const k = (state.kapans || []).find(x => x.id === id);
     if (!k) return;
 
     const toDept = document.getElementById("qtToDeptSelect").value;
@@ -3605,7 +3617,7 @@
     }
 
     const tbody = document.getElementById("batchTransferTableBody");
-    const list = Array.from(selectedBatchIds).map(id => state.kapans.find(k => k.id === id)).filter(Boolean);
+    const list = Array.from(selectedBatchIds).map(id => (state.kapans || []).find(k => k.id === id)).filter(Boolean);
     tbody.innerHTML = list.map((k, i) => {
       const idx = DEPTS.indexOf(k.currentDept);
       const nextDept = idx >= 0 && idx < DEPTS.length - 1 ? DEPTS[idx + 1] : "Sales Stock";
@@ -3646,7 +3658,7 @@
 
     let count = 0;
     for (let i = 0; i < ids.length; i++) {
-      const k = state.kapans.find(x => x.id === ids[i].value);
+      const k = (state.kapans || []).find(x => x.id === ids[i].value);
       if (k) {
         const toDept = tos[i].value;
         const newC = parseFloat(carats[i].value);
@@ -3697,21 +3709,21 @@
     const kFilter = (document.getElementById("ledgerKapanFilter") || {}).value || "";
     const rFilter = (document.getElementById("ledgerRoughFilter") || {}).value || "";
 
-    let list = state.kapans.filter(k => {
-      const rough = state.roughLots.find(r => r.id === k.roughId);
+    let list = (state.kapans || []).filter(k => {
+      const rough = (state.roughLots || []).find(r => r.id === k.roughId);
       const rName = rough ? rough.name : "";
       return isMatchSearch(k.kapanNo, kFilter) && rName.toLowerCase().includes(rFilter.toLowerCase());
     });
 
     tbody.innerHTML = list.map((k, idx) => {
-      const rough = state.roughLots.find(r => r.id === k.roughId);
+      const rough = (state.roughLots || []).find(r => r.id === k.roughId);
       const rName = rough ? rough.name : "હવા";
       const rate = rough ? (rough.rate || 2730) : 2730;
       const roughWeight = k.roughWeight || k.carat;
       const totalRoughCarats = rough ? (rough.carats || roughWeight) : roughWeight;
       const rafAmt = rough ? (rough.finalRoughAmt ? (rough.finalRoughAmt * (roughWeight / totalRoughCarats)) : (roughWeight * rate)) : 0;
       
-      const chart = state.polishCharts.find(pc => pc && pc.kapanNo === k.kapanNo);
+      const chart = (state.polishCharts || []).find(pc => pc && pc.kapanNo === k.kapanNo);
       const isCompleted = k.currentDept === "OK KAPAN (ઓકે કાપણ)";
       const polishNang = isCompleted ? (chart ? (chart.polishNang || k.nang) : k.nang) : 0;
       const masterMajRate = state.majuriRate !== undefined ? state.majuriRate : 65;
@@ -3727,7 +3739,7 @@
       const padtar = (isCompleted && polishCarat > 0) ? Math.round(toAmt / polishCarat) : 0;
 
       // Calculate total lost carats and pieces from transfers
-      const transfersForKapan = state.transfers.filter(t => t.kapanNo === k.kapanNo);
+      const transfersForKapan = (state.transfers || []).filter(t => t.kapanNo === k.kapanNo);
       let totalCaratLoss = 0;
       let totalNangLoss = 0;
       transfersForKapan.forEach(t => {
@@ -3796,9 +3808,9 @@
     if (!sel) return;
     
     // Filter kapans that are completed (OK KAPAN) and do not have an approved Polish Chart yet
-    const waitingKapans = state.kapans.filter(k => {
+    const waitingKapans = (state.kapans || []).filter(k => {
       const isOk = k.currentDept === "OK KAPAN (ઓકે કાપણ)";
-      const chart = state.polishCharts.find(pc => pc.kapanNo === k.kapanNo && pc.status === "Approved");
+      const chart = (state.polishCharts || []).find(pc => pc.kapanNo === k.kapanNo && pc.status === "Approved");
       return isOk && !chart;
     });
 
@@ -3842,7 +3854,7 @@
       return;
     }
     
-    const chart = state.polishCharts.find(pc => pc.id === select.value || pc.kapanNo === select.value);
+    const chart = (state.polishCharts || []).find(pc => pc.id === select.value || pc.kapanNo === select.value);
     if (!chart) {
       if (previewEl) previewEl.style.display = "none";
       if (placeholderEl) placeholderEl.style.display = "block";
@@ -3910,7 +3922,7 @@
 
   function loadPolishChartForm() {
     const id = document.getElementById("pcKapanSelect").value;
-    const k = state.kapans.find(x => x.id === id);
+    const k = (state.kapans || []).find(x => x.id === id);
     const formEl = document.getElementById("polishChartFormCard");
     const previewEl = document.getElementById("polishChartPreviewBox");
     const placeholderEl = document.getElementById("pcPlaceholderMsg");
@@ -3924,12 +3936,12 @@
     
     if (formEl) formEl.style.display = "block";
     
-    let chart = state.polishCharts.find(pc => pc.kapanNo === k.kapanNo);
+    let chart = (state.polishCharts || []).find(pc => pc.kapanNo === k.kapanNo);
     if (!chart) {
       chart = ensureDraftPolishChart(k);
     }
 
-    const rough = state.roughLots.find(r => r.id === k.roughId);
+    const rough = (state.roughLots || []).find(r => r.id === k.roughId);
 
     document.getElementById("pcKapanNo").value = chart.kapanNo;
     document.getElementById("pcRoughName").value = chart.roughName || "";
@@ -4016,9 +4028,9 @@
   function savePolishChart(e) {
     e.preventDefault();
     const kapanNo = document.getElementById("pcKapanNo").value;
-    const k = state.kapans.find(x => x.kapanNo === kapanNo);
+    const k = (state.kapans || []).find(x => x.kapanNo === kapanNo);
 
-    let chart = state.polishCharts.find(pc => pc.kapanNo === kapanNo);
+    let chart = (state.polishCharts || []).find(pc => pc.kapanNo === kapanNo);
     const isNew = !chart;
     if (isNew) {
       chart = { id: "PC" + Date.now(), kapanNo: kapanNo };
@@ -4113,7 +4125,7 @@
   }
 
   function getDeptDaysForPolishChart(kapanNo) {
-    const k = state.kapans.find(x => x.kapanNo === kapanNo);
+    const k = (state.kapans || []).find(x => x.kapanNo === kapanNo);
     if (!k) return { assort: "-", galaxy: "-", fourP: "-", rt: "-", reAssort: "-", khata: "-", total: "-" };
 
     // Get transfers chronologically
@@ -4366,7 +4378,7 @@
 
     const query = (document.getElementById("workableSearch") || {}).value || "";
 
-    const activeList = state.kapans.filter(k => isMatchSearch(k.kapanNo, query));
+    const activeList = (state.kapans || []).filter(k => isMatchSearch(k.kapanNo, query));
 
     const completedList = activeList.filter(k => k.currentDept === "OK KAPAN (ઓકે કાપણ)");
     const processingList = activeList.filter(k => k.currentDept !== "OK KAPAN (ઓકે કાપણ)");
@@ -4390,12 +4402,12 @@
       }
 
       const drafts = completedList.filter(k => {
-        const chart = state.polishCharts.find(pc => pc && pc.kapanNo === k.kapanNo);
+        const chart = (state.polishCharts || []).find(pc => pc && pc.kapanNo === k.kapanNo);
         return !chart || chart.status !== "Approved";
       });
 
       const approved = completedList.filter(k => {
-        const chart = state.polishCharts.find(pc => pc && pc.kapanNo === k.kapanNo);
+        const chart = (state.polishCharts || []).find(pc => pc && pc.kapanNo === k.kapanNo);
         return chart && chart.status === "Approved";
       });
 
@@ -4423,8 +4435,8 @@
             <tbody>
       `;
       finalCompletedList.forEach(k => {
-        const rough = state.roughLots.find(r => r.id === k.roughId);
-        const chart = state.polishCharts.find(pc => pc && pc.kapanNo === k.kapanNo);
+        const rough = (state.roughLots || []).find(r => r.id === k.roughId);
+        const chart = (state.polishCharts || []).find(pc => pc && pc.kapanNo === k.kapanNo);
         const isApproved = chart && chart.status === "Approved";
         const statusBadge = isApproved 
           ? `<span class="status-done" style="background:#dcfce7; color:#166534; border:1px solid #bbf7d0; font-weight:700;">✅ મંજૂર થયેલ (Approved)</span>` 
@@ -4538,7 +4550,7 @@
   }
 
   function viewChartDetailsPopup(kapanNo) {
-    const pc = state.polishCharts.find(x => x.kapanNo === kapanNo);
+    const pc = (state.polishCharts || []).find(x => x.kapanNo === kapanNo);
     if (!pc) {
       alert("❌ આ કાપણનો કોઈ પોલિશ ચાર્ટ મળ્યો નથી!");
       return;
@@ -4595,7 +4607,7 @@
   // REPAIRING
   function populateRepairCarat() {
     const sel = document.getElementById("rpKapan");
-    const k = state.kapans.find(x => x.kapanNo === sel.value);
+    const k = (state.kapans || []).find(x => x.kapanNo === sel.value);
     if (k) {
       document.getElementById("rpCarat").value = k.carat;
       document.getElementById("rpNang").value = k.nang;
@@ -4609,7 +4621,7 @@
       alert("❌ કૃપા કરીને કાપણ પસંદ કરો!");
       return;
     }
-    const k = state.kapans.find(x => x.kapanNo === kapanNo);
+    const k = (state.kapans || []).find(x => x.kapanNo === kapanNo);
 
     const newRep = {
       id: "REP" + Date.now(),
@@ -4646,7 +4658,7 @@
 
     const tbody = document.getElementById("repairTableBody");
     if (!tbody) return;
-    tbody.innerHTML = state.repairs.map(r => {
+    tbody.innerHTML = (state.repairs || []).map(r => {
       const vigatHtml = r.vigat 
         ? `
           <details style="cursor: pointer; font-size: 11.5px; outline: none; border: none; padding: 2px;">
@@ -4692,7 +4704,7 @@
       return;
     }
 
-    const k = state.kapans.find(x => x.kapanNo === kapanNo);
+    const k = (state.kapans || []).find(x => x.kapanNo === kapanNo);
     if (!k) return;
 
     const prevCarat = k.carat;
@@ -4750,7 +4762,7 @@
     const tbody = document.getElementById("ghatTableBody");
     if (!tbody) return;
 
-    const lossTransfers = state.transfers.filter(t => {
+    const lossTransfers = (state.transfers || []).filter(t => {
       const wLoss = (t.prevCarat || 0) - (t.carat || 0);
       const nLoss = (t.prevNang || 0) - (t.nang || 0);
       return wLoss > 0.009 || nLoss > 0;
@@ -5106,7 +5118,7 @@
   function renderAuditTable() {
     const tbody = document.getElementById("auditTableBody");
     if (!tbody) return;
-    tbody.innerHTML = state.audits.map(a => `
+    tbody.innerHTML = (state.audits || []).map(a => `
       <tr>
         <td>${new Date(a.timestamp).toLocaleString("gu-IN")}</td>
         <td><span class="tag-badge ${a.action==='DELETE'?'tag-urgent':'tag-sample'}">${a.action}</span></td>
@@ -5128,7 +5140,7 @@
       return;
     }
 
-    tbody.innerHTML = state.transfers.map(t => {
+    tbody.innerHTML = (state.transfers || []).map(t => {
       return `
         <tr>
           <td>${new Date(t.timestamp).toLocaleString("gu-IN")}</td>
@@ -5162,7 +5174,7 @@
       return;
     }
 
-    const k = state.kapans.find(x => x.kapanNo === t.kapanNo);
+    const k = (state.kapans || []).find(x => x.kapanNo === t.kapanNo);
     if (!k) {
       alert("❌ સંબંધિત કાપણ મળ્યું નથી!");
       return;
@@ -5205,7 +5217,7 @@
     });
 
     // Remove from transfers list
-    state.transfers = state.transfers.filter(x => x.id !== transferId);
+    state.transfers = (state.transfers || []).filter(x => x.id !== transferId);
 
     saveState();
     renderAll();
@@ -5241,7 +5253,7 @@
     t.nang = newNang;
     t.vigat = newVigat;
 
-    const k = state.kapans.find(x => x.kapanNo === t.kapanNo);
+    const k = (state.kapans || []).find(x => x.kapanNo === t.kapanNo);
     if (k) {
       const kapanTransfers = state.transfers
         .filter(x => x.kapanNo === k.kapanNo)
@@ -5279,7 +5291,7 @@
     }
 
     if (confirm(`⚠️ શું તમે ખરેખર કાપણ ${t.kapanNo} ની આ ટ્રાન્સફર એન્ટ્રી લોગ ડીલીટ કરવા માંગો છો? આનાથી કાપણની પ્રવાહ સ્થિતિ બદલાશે નહીં, ફક્ત હિસ્ટ્રી માંથી ટ્રાન્સફર રેકોર્ડ ડીલીટ થશે.`)) {
-      state.transfers = state.transfers.filter(x => x.id !== transferId);
+      state.transfers = (state.transfers || []).filter(x => x.id !== transferId);
 
       state.audits.unshift({
         id: "AUD" + Date.now(),
@@ -5297,7 +5309,7 @@
   }
 
   function openEditModal(id) {
-    const k = state.kapans.find(x => x.id === id);
+    const k = (state.kapans || []).find(x => x.id === id);
     if (!k) return;
 
     document.getElementById("edId").value = k.id;
@@ -5323,7 +5335,7 @@
     }
 
     const id = document.getElementById("edId").value;
-    const k = state.kapans.find(x => x.id === id);
+    const k = (state.kapans || []).find(x => x.id === id);
     if (!k) return;
 
     const oldSnapshot = `Carat: ${k.carat}, Nang: ${k.nang}, Vigat: ${k.vigat}`;
@@ -5355,7 +5367,7 @@
     if (pass === null) return;
     const passHash = await sha256(pass);
     if (passHash === state.auth.editPassHash) {
-      const k = state.kapans.find(x => x.id === id);
+      const k = (state.kapans || []).find(x => x.id === id);
       if (!k) return;
 
       state.audits.unshift({
@@ -5367,7 +5379,7 @@
         timestamp: new Date().toISOString()
       });
 
-      state.kapans = state.kapans.filter(x => x.id !== id);
+      state.kapans = (state.kapans || []).filter(x => x.id !== id);
       saveState();
       renderAll();
       showToast("કાપણ ડીલીટ થયું!", "warning");
