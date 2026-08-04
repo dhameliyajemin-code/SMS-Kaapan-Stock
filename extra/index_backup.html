@@ -6210,6 +6210,169 @@
     }
   }
 
+  // PASSWORD MANAGEMENT & VISIBILITY FUNCTIONS
+  function togglePassInput(id) {
+    const input = document.getElementById(id);
+    if (input) {
+      input.type = input.type === "password" ? "text" : "password";
+    }
+  }
+
+  function openChangePasswordModal(role) {
+    const roleInput = document.getElementById("cpRole");
+    if (roleInput) roleInput.value = role;
+
+    const titleEl = document.getElementById("cpModalTitle");
+    const newPassLabelEl = document.getElementById("cpNewPassLabel");
+
+    if (role === 'admin') {
+      if (titleEl) titleEl.innerHTML = "🔑 એડમિન પાસવર્ડ બદલો (Change Admin Password)";
+      if (newPassLabelEl) newPassLabelEl.innerHTML = "નવો એડમિન પાસવર્ડ (New Admin Password) <span class=\"req-star\">*</span>";
+    } else if (role === 'stock') {
+      if (titleEl) titleEl.innerHTML = "🔑 સ્ટોક પાસવર્ડ બદલો (Change Stock Password)";
+      if (newPassLabelEl) newPassLabelEl.innerHTML = "નવો સ્ટોક પાસવર્ડ (New Stock Password) <span class=\"req-star\">*</span>";
+    } else if (role === 'edit') {
+      if (titleEl) titleEl.innerHTML = "🔑 એડિટ પાસવર્ડ બદલો (Change Edit Password)";
+      if (newPassLabelEl) newPassLabelEl.innerHTML = "નવો એડિટ પાસવર્ડ (New Edit Password) <span class=\"req-star\">*</span>";
+    }
+
+    const currentAdminPassInput = document.getElementById("cpCurrentAdminPass");
+    const newPassInput = document.getElementById("cpNewPass");
+    if (currentAdminPassInput) currentAdminPassInput.value = "";
+    if (newPassInput) newPassInput.value = "";
+
+    const modal = document.getElementById("changePasswordModal");
+    if (modal) modal.style.display = "flex";
+  }
+
+  function closeChangePasswordModal() {
+    const modal = document.getElementById("changePasswordModal");
+    if (modal) modal.style.display = "none";
+  }
+
+  async function submitChangePassword(e) {
+    e.preventDefault();
+    const role = document.getElementById("cpRole").value;
+    const currentAdminPass = document.getElementById("cpCurrentAdminPass").value.trim();
+    const newPass = document.getElementById("cpNewPass").value.trim();
+
+    const currentAdminPassHash = await sha256(currentAdminPass);
+    if (currentAdminPassHash !== state.auth.adminPassHash) {
+      alert("❌ વર્તમાન એડમિન પાસવર્ડ ખોટો છે!");
+      return;
+    }
+
+    const newPassHash = await sha256(newPass);
+    if (!state.auth) {
+      state.auth = {};
+    }
+
+    if (role === 'admin') {
+      state.auth.adminPassHash = newPassHash;
+    } else if (role === 'stock') {
+      state.auth.stockPassHash = newPassHash;
+    } else if (role === 'edit') {
+      state.auth.editPassHash = newPassHash;
+    }
+
+    saveState();
+    closeChangePasswordModal();
+    showToast("🔓 પાસવર્ડ સફળતાપૂર્વક અપડેટ થઈ ગયો!", "success");
+    renderAll();
+  }
+
+  // WIPE DATA MODAL FUNCTIONS
+  function openWipeDataModal() {
+    const modal = document.getElementById("wipeDataModal");
+    if (modal) modal.style.display = "flex";
+    const passInput = document.getElementById("wdPassword");
+    if (passInput) passInput.value = "";
+  }
+
+  function closeWipeDataModal() {
+    const modal = document.getElementById("wipeDataModal");
+    if (modal) modal.style.display = "none";
+  }
+
+  async function submitWipeData(e) {
+    e.preventDefault();
+    const timeframe = document.getElementById("wdTimeframe").value;
+    const pass = document.getElementById("wdPassword").value;
+    const passHash = await sha256(pass);
+    if (passHash !== state.auth.editPassHash) {
+      alert("❌ એડિટ/ડીલીટ પાસવર્ડ ખોટો છે!");
+      return;
+    }
+
+    if (timeframe === "all") {
+      if (confirm("⚠️ શું તમે ખરેખર તમામ ડેટા અને સેટીંગ્સ સાફ કરવા માંગો છો? આ ફેક્ટરી રીસેટ છે અને તે પાછી ખેંચી શકાશે નહીં.")) {
+        safeStorage.removeItem("diamond_stock_state_v7");
+        state = {
+          auth: {
+            adminPassHash: "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+            stockPassHash: "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+            editPassHash: "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3"
+          },
+          majuriRate: 65,
+          roughLots: [], kapans: [], transfers: [], repairs: [], audits: [], polishCharts: [], transferRules: [],
+          depts: [...DEPTS], deptConfigs: {}, autoLogoutHours: 11, firebaseConfig: { apiKey: "AIzaSyDvu7pJMXatKNHFAuJMtsh_zpmb8Jr0BCM", dbUrl: "https://ng-cost-default-rtdb.firebaseio.com", projectId: "ng-cost" }, firebaseWiped: false
+        };
+        if (dbRef) dbRef.set(state).catch(e => console.error('Reset sync failed:', e));
+        checkInitialData();
+        renderAll();
+        showToast("તમામ ડેટા અને સેટીંગ્સ સાફ કરવામાં આવ્યા છે!", "danger");
+        closeWipeDataModal();
+      }
+      return;
+    }
+
+    let cutoffMs = 0;
+    const now = Date.now();
+    if (timeframe === "today") {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      cutoffMs = todayStart.getTime();
+    } else if (timeframe === "24h") {
+      cutoffMs = now - (24 * 60 * 60 * 1000);
+    } else if (timeframe === "3d") {
+      cutoffMs = now - (3 * 24 * 60 * 60 * 1000);
+    } else if (timeframe === "1w") {
+      cutoffMs = now - (7 * 24 * 60 * 60 * 1000);
+    } else if (timeframe === "1m") {
+      cutoffMs = now - (30 * 24 * 60 * 60 * 1000);
+    }
+
+    if (confirm(`⚠️ શું તમે ખરેખર પસંદ કરેલા સમયગાળાનો તમામ ડેટા સાફ કરવા માંગો છો? આ ક્રિયા પાછી ખેંચી શકાશે નહીં.`)) {
+      const shouldWipe = (timestampOrId) => {
+        if (!timestampOrId) return false;
+        let ms = 0;
+        if (typeof timestampOrId === "number") {
+          ms = timestampOrId;
+        } else if (typeof timestampOrId === "string") {
+          const match = timestampOrId.match(/^(?:R|K|T|REP|PC|AUD)?(\d+)$/);
+          if (match) {
+            ms = parseInt(match[1]);
+          } else {
+            ms = Date.parse(timestampOrId);
+          }
+        }
+        return ms >= cutoffMs;
+      };
+
+      state.kapans = (state.kapans || []).filter(k => !shouldWipe(k.createdDate) && !shouldWipe(k.id));
+      state.roughLots = (state.roughLots || []).filter(r => !shouldWipe(r.date) && !shouldWipe(r.id));
+      state.transfers = (state.transfers || []).filter(t => !shouldWipe(t.timestamp) && !shouldWipe(t.id));
+      state.repairs = (state.repairs || []).filter(r => !shouldWipe(r.sentDate) && !shouldWipe(r.id));
+      state.audits = (state.audits || []).filter(a => !shouldWipe(a.timestamp) && !shouldWipe(a.id));
+      state.polishCharts = (state.polishCharts || []).filter(p => !shouldWipe(p.date) && !shouldWipe(p.id));
+
+      saveState();
+      renderAll();
+      showToast("ડેટા સફળતાપૂર્વક સાફ કરવામાં આવ્યો છે!", "warning");
+      closeWipeDataModal();
+    }
+  }
+
 </script>
 </body>
 </html>
