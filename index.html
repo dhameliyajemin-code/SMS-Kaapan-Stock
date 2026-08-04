@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ડાયમંડ સ્ટોક સિસ્ટમ | Diamond Stock System</title>
   <!-- FIREBASE COMPAT SDK FOR REALTIME BACKUP -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js" crossorigin="anonymous"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js" crossorigin="anonymous"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Hind+Vadodara:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -2094,7 +2094,7 @@
           });
         }
 
-        // Listen for live changes
+        // Listen for live changes with error handler
         dbRef.on("value", (snapshot) => {
           const val = snapshot.val();
           if (val && JSON.stringify(val) !== JSON.stringify(state)) {
@@ -2108,6 +2108,8 @@
             saveState();
             renderAll();
           }
+        }, (error) => {
+          console.warn("Firebase live update listener cancelled (check rules):", error);
         });
       } catch (e) {
         console.error("Firebase init failed:", e);
