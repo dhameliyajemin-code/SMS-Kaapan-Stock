@@ -3025,7 +3025,7 @@
     if (!container) return;
 
     function getDeptHistoryValues(k, deptName) {
-      const transfersForKapan = (state.transfers || []).filter(t => t.kapanNo.trim().toLowerCase() === k.kapanNo.trim().toLowerCase());
+      const transfersForKapan = (state.transfers || []).filter(t => t && t.kapanNo && typeof t.kapanNo === "string" && t.kapanNo.trim().toLowerCase() === k.kapanNo.trim().toLowerCase());
       const transferFromD = transfersForKapan.find(t => t.fromDept === deptName);
       
       let nang = null;
