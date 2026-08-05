@@ -514,7 +514,7 @@
           repairs: parsed.repairs || [],
           audits: parsed.audits || [],
           polishCharts: parsed.polishCharts || [],
-          prunedMockData_v4: parsed.prunedMockData_v4 || false,
+          prunedMockData_v5: parsed.prunedMockData_v5 || false,
           transferRules: parsed.transferRules || [
             { from: "Galaxy", to: "4P", customHeader: "GLX Top Size", isCompulsory: true },
             { from: "4P", to: "RT", customHeader: "4P Output Carats", isCompulsory: true }
@@ -602,7 +602,7 @@
 
   function checkInitialData() {
     // Run cleanup of old mock data EXACTLY ONCE to protect future live entries
-    if (!state.prunedMockData_v4 || (state.kapans && state.kapans.length < 5)) {
+    if (!state.prunedMockData_v5 || (state.kapans && state.kapans.length < 5)) {
       state.roughLots = [
         { id: "R_AL65", name: "try 000", party: "Anilbhai", carats: 97.88, rate: 2770, finalRoughAmt: 271128, vigat: "AL 65 Rough", date: "2026-06-11T12:00:00Z" },
         { id: "R_LOT101", name: "lot 101", party: "Kiritbhai", carats: 500.00, rate: 2500, finalRoughAmt: 1250000, vigat: "Lot 101 Raw", date: "2026-07-20T10:00:00Z" }
@@ -610,62 +610,64 @@
 
       state.kapans = [
         { 
-          id: "K_M1_124", kapanNo: "M-1-124", roughId: "R_AL65", carat: 25.34, nang: 4664, roughWeight: 97.88, 
+          id: "K_M1_124", kapanNo: "M-1-124", roughId: "R_AL65", carat: 25.34, nang: 4664, roughWeight: 97.88, roughNang: 1819,
           currentDept: "OK KAPAN (ઓકે કાપણ)", tag: "Regular", status: "Completed", vigat: "ઓકે કાપણ", 
           vehicleTracking: "", createdDate: "2026-06-04T12:00:00Z", lastMovedDate: "2026-06-11T07:12:00Z",
           makeablePiece: 4636, makeableVajan: 27.86, fourPNang: 4605, fourPCt: 36.49, rtNang: 4605,
           rtCt: 35.00, rtPct: 95.92, fourPPct: 23.65, r2pPct: 28.47
         },
         { 
-          id: "K_M1_125", kapanNo: "M-1-125", roughId: "R_AL65", carat: 13.50, nang: 2400, roughWeight: 50.00, 
+          id: "K_M1_125", kapanNo: "M-1-125", roughId: "R_AL65", carat: 13.50, nang: 2400, roughWeight: 50.00, roughNang: 2400,
           currentDept: "OK KAPAN (ઓકે કાપણ)", tag: "Urgent", status: "Completed", vigat: "ડેમો કાપણ ૨", 
           vehicleTracking: "", createdDate: "2026-06-10T09:00:00Z", lastMovedDate: "2026-06-18T14:30:00Z",
           makeablePiece: 2400, makeableVajan: 15.00, fourPNang: 2380, fourPCt: 19.50, rtNang: 2380,
           rtCt: 18.20, rtPct: 93.33, fourPPct: 23.08, r2pPct: 27.00
         },
         { 
-          id: "K_M1_126", kapanNo: "M-1-126", roughId: "R_LOT101", carat: 20.00, nang: 3500, roughWeight: 75.00, 
+          id: "K_M1_126", kapanNo: "M-1-126", roughId: "R_LOT101", carat: 20.00, nang: 3500, roughWeight: 75.00, roughNang: 3500,
           currentDept: "OK KAPAN (ઓકે કાપણ)", tag: "Regular", status: "Completed", vigat: "ડેમો કાપણ ૩", 
           vehicleTracking: "", createdDate: "2026-07-21T08:00:00Z", lastMovedDate: "2026-07-29T10:15:00Z",
           makeablePiece: 3450, makeableVajan: 22.00, fourPNang: 3400, fourPCt: 28.00, rtNang: 3400,
           rtCt: 26.50, rtPct: 94.64, fourPPct: 21.43, r2pPct: 26.67
         },
         { 
-          id: "K_M1_127", kapanNo: "M-1-127", roughId: "R_LOT101", carat: 60.00, nang: 1100, roughWeight: 60.00, 
+          id: "K_M1_127", kapanNo: "M-1-127", roughId: "R_LOT101", carat: 60.00, nang: 1100, roughWeight: 60.00, roughNang: 1100,
           currentDept: "Galaxy", tag: "Regular", status: "Chalu", vigat: "ગેલેક્ષી પ્રોસેસ ચાલુ", 
           vehicleTracking: "", createdDate: "2026-07-22T10:00:00Z", lastMovedDate: "2026-07-22T10:00:00Z"
         },
         { 
-          id: "K_M1_128", kapanNo: "M-1-128", roughId: "R_LOT101", carat: 40.00, nang: 800, roughWeight: 40.00, 
+          id: "K_M1_128", kapanNo: "M-1-128", roughId: "R_LOT101", carat: 40.00, nang: 800, roughWeight: 40.00, roughNang: 800,
           currentDept: "AP OK", tag: "Sample", status: "Chalu", vigat: "એસોસોર્ટમેન્ટ પ્લાનિંગ ઓકે", 
           vehicleTracking: "", createdDate: "2026-07-23T11:00:00Z", lastMovedDate: "2026-07-24T12:00:00Z"
         },
         { 
-          id: "K_M1_129", kapanNo: "M-1-129", roughId: "R_LOT101", carat: 80.00, nang: 1500, roughWeight: 80.00, 
+          id: "K_M1_129", kapanNo: "M-1-129", roughId: "R_LOT101", carat: 80.00, nang: 1500, roughWeight: 80.00, roughNang: 1500,
           currentDept: "4P", tag: "Regular", status: "Chalu", vigat: "4P લેસર ચાલુ", 
           vehicleTracking: "", createdDate: "2026-07-24T09:00:00Z", lastMovedDate: "2026-07-26T15:00:00Z",
           makeablePiece: 1480, makeableVajan: 25.00
         },
         { 
-          id: "K_M1_130", kapanNo: "M-1-130", roughId: "R_AL65", carat: 55.00, nang: 950, roughWeight: 55.00, 
+          id: "K_M1_130", kapanNo: "M-1-130", roughId: "R_AL65", carat: 55.00, nang: 950, roughWeight: 55.00, roughNang: 950,
           currentDept: "RT", tag: "Urgent", status: "Chalu", vigat: "RT ગર્ડલ બ્રુટિંગ", 
           vehicleTracking: "", createdDate: "2026-07-25T14:00:00Z", lastMovedDate: "2026-07-28T09:30:00Z",
           makeablePiece: 940, makeableVajan: 16.50, fourPNang: 935, fourPCt: 22.10, fourPPct: 25.34
         },
         { 
-          id: "K_M1_131", kapanNo: "M-1-131", roughId: "R_LOT101", carat: 45.00, nang: 820, roughWeight: 45.00, 
+          id: "K_M1_131", kapanNo: "M-1-131", roughId: "R_LOT101", carat: 45.00, nang: 820, roughWeight: 45.00, roughNang: 820,
           currentDept: "KHATA", tag: "Regular", status: "Chalu", vigat: "ખાતા વિભાગમાં તળિયું/પહેલ કામ ચાલુ", 
           vehicleTracking: "", createdDate: "2026-07-26T10:30:00Z", lastMovedDate: "2026-07-30T11:00:00Z",
           makeablePiece: 810, makeableVajan: 13.80, fourPNang: 805, fourPCt: 18.20, fourPPct: 24.18,
           rtNang: 805, rtCt: 17.50, rtPct: 96.15
         },
         { 
-          id: "K_M1_132", kapanNo: "M-1-132", roughId: "R_AL65", carat: 90.00, nang: 1700, roughWeight: 90.00, 
-          currentDept: "Galaxy", tag: "Regular", status: "Chalu", vigat: "નવું ગેલેક્ષી કાપણ", 
-          vehicleTracking: "", createdDate: "2026-07-27T08:00:00Z", lastMovedDate: "2026-07-27T08:00:00Z"
+          id: "K_M1_132", kapanNo: "M-1-132", roughId: "R_AL65", carat: 29.00, nang: 3470, roughWeight: 90.00, roughNang: 1700,
+          currentDept: "OK KAPAN (ઓકે કાપણ)", tag: "Regular", status: "Completed", vigat: "try 000", 
+          vehicleTracking: "", createdDate: "2026-07-27T08:00:00Z", lastMovedDate: "2026-07-27T15:00:00Z",
+          makeablePiece: 3500, makeableVajan: 31.50, fourPNang: 3490, fourPCt: 39.50, rtNang: 3490,
+          rtCt: 38.50, rtPct: 97.47, fourPPct: 20.25, r2pPct: 35.00, roughRate: 2029
         },
         { 
-          id: "K_M1_133", kapanNo: "M-1-133", roughId: "R_LOT101", carat: 70.00, nang: 1300, roughWeight: 70.00, 
+          id: "K_M1_133", kapanNo: "M-1-133", roughId: "R_LOT101", carat: 70.00, nang: 1300, roughWeight: 70.00, roughNang: 1300,
           currentDept: "4P", tag: "Sample", status: "Chalu", vigat: "4P લેસર કટિંગ ચાલુ", 
           vehicleTracking: "", createdDate: "2026-07-28T16:00:00Z", lastMovedDate: "2026-07-29T10:00:00Z",
           makeablePiece: 1290, makeableVajan: 21.00
@@ -711,6 +713,19 @@
           polishNang: 3500, polishCarat: 20.00, padtar: 20750,
           s65: 35.0, s4: 30.0, s2: 15.0, s20: 10.0, s00: 5.0, s000: 5.0, s2plus: 80.0, s2minus: 20.0,
           g5a7: 0, g8a10b: 0, g1112: 0, gwhnw: 0, gowttlb: 0, gtlblbdb: 0, vigat: ""
+        },
+        {
+          id: "PC_M1_132", kapanNo: "M-1-132", roughName: "try 000", date: "2026-07-27", status: "Approved",
+          assort: "A-1", reAssort: "RA-1", micron: "M-1", shading: "S-1",
+          tableAssort: "OK", tableGlx: "OK", table4P: "79.5%", tableRT: "43.4%",
+          tableReAssort: "OK", tableKhata: "OK", tableJama: "જમા", tableVigat: "",
+          rWeight: 90.00, rSize: "18.8889", cardSize: 111.11,
+          reqWeightPct: 35.00, fourPPct: 20.25, rtPct: 97.47,
+          multPct: 35.00, rToPolishPct: 32.22, varPct: 2.78,
+          weightFormula: "2.50 * 2029", gNangFormula: "3470 * 65",
+          polishNang: 3470, polishCarat: 29.00, padtar: 14080,
+          s65: 33.0, s4: 34.0, s2: 12.0, s20: 14.0, s00: 2.0, s000: 5.0, s2plus: 79.0, s2minus: 21.0,
+          g5a7: 0, g8a10b: 0, g1112: 0, gwhnw: 0, gowttlb: 0, gtlblbdb: 0, vigat: ""
         }
       ];
 
@@ -731,12 +746,19 @@
         { id: "TR_M1_126_2", kapanNo: "M-1-126", fromDept: "AP OK", toDept: "4P", prevCarat: 75.00, prevNang: 3500, carat: 75.00, nang: 3500, vigat: "AP ok", timestamp: "2026-07-23T11:00:00Z" },
         { id: "TR_M1_126_3", kapanNo: "M-1-126", fromDept: "4P", toDept: "RT", prevCarat: 75.00, prevNang: 3500, carat: 28.00, nang: 3400, vigat: "4p ok", timestamp: "2026-07-25T12:00:00Z" },
         { id: "TR_M1_126_4", kapanNo: "M-1-126", fromDept: "RT", toDept: "KHATA", prevCarat: 28.00, prevNang: 3400, carat: 26.50, nang: 3400, vigat: "rt ok", timestamp: "2026-07-27T10:00:00Z" },
-        { id: "TR_M1_126_5", kapanNo: "M-1-126", fromDept: "KHATA", toDept: "OK KAPAN (ઓકે કાપણ)", prevCarat: 26.50, prevNang: 3400, carat: 20.00, nang: 3500, vigat: "Completed", timestamp: "2026-07-29T10:15:00Z" }
+        { id: "TR_M1_126_5", kapanNo: "M-1-126", fromDept: "KHATA", toDept: "OK KAPAN (ઓકે કાપણ)", prevCarat: 26.50, prevNang: 3400, carat: 20.00, nang: 3500, vigat: "Completed", timestamp: "2026-07-29T10:15:00Z" },
+
+        { id: "TR_M1_132_1", kapanNo: "M-1-132", fromDept: "Galaxy", toDept: "AP OK", prevCarat: 90.00, prevNang: 1700, carat: 89.90, nang: 3500, vigat: "[Rough to Polish %: 35] Galaxy to AP OK", timestamp: "2026-07-27T09:00:00Z" },
+        { id: "TR_M1_132_2", kapanNo: "M-1-132", fromDept: "AP OK", toDept: "4P", prevCarat: 89.90, prevNang: 3500, carat: 89.00, nang: 3495, vigat: "[Lots: 70] AP OK to 4P", timestamp: "2026-07-27T10:00:00Z" },
+        { id: "TR_M1_132_3", kapanNo: "M-1-132", fromDept: "4P", toDept: "4P OK RT BAAKI", prevCarat: 89.00, prevNang: 3495, carat: 39.50, nang: 3490, vigat: "[Lots: 70] 4P to 4P OK RT BAAKI", timestamp: "2026-07-27T11:00:00Z" },
+        { id: "TR_M1_132_4", kapanNo: "M-1-132", fromDept: "4P OK RT BAAKI", toDept: "RT", prevCarat: 39.50, prevNang: 3490, carat: 39.50, nang: 3490, vigat: "RT Transfer", timestamp: "2026-07-27T12:00:00Z" },
+        { id: "TR_M1_132_5", kapanNo: "M-1-132", fromDept: "RT", toDept: "RT OK KHATA BAAKI", prevCarat: 39.50, prevNang: 3490, carat: 38.50, nang: 3489, vigat: "RT OK Transfer", timestamp: "2026-07-27T13:00:00Z" },
+        { id: "TR_M1_132_6", kapanNo: "M-1-132", fromDept: "RT OK KHATA BAAKI", toDept: "KHATA", prevCarat: 38.50, prevNang: 3489, carat: 38.50, nang: 3489, vigat: "KHATA Transfer", timestamp: "2026-07-27T14:00:00Z" },
+        { id: "TR_M1_132_7", kapanNo: "M-1-132", fromDept: "KHATA", toDept: "OK KAPAN (ઓકે કાપણ)", prevCarat: 38.50, prevNang: 3489, carat: 29.00, nang: 3470, vigat: "OK KAPAN Transfer", timestamp: "2026-07-27T15:00:00Z" }
       ];
 
       state.repairs = [];
-      state.audits = (state.audits || []).filter(a => a && (a.kapanNo === "M-1-124" || a.kapanNo === "M-1-125" || a.kapanNo === "M-1-126"));
-      state.prunedMockData_v4 = true;
+      state.prunedMockData_v5 = true;
     }
 
     if (state.roughLots.length === 0) {
@@ -959,6 +981,7 @@
         <button class="nav-btn active" onclick="switchPage('admin_dash', event)">📊 Dashboard</button>
         <button class="nav-btn" onclick="switchPage('admin_entry', event)">💎 રફ ખરીદી & સીરીઝ કાપણ</button>
         <button class="nav-btn" onclick="switchPage('admin_sample', event)">🟡 સેમ્પલ ટ્રેકિંગ ડેશબોર્ડ</button>
+        <button class="nav-btn" onclick="switchPage('reports', event)">📈 રિપોર્ટ્સ (Reports)</button>
         <button class="nav-btn" onclick="switchPage('audit', event)">📜 સુધારા & ડીલીટ લોગ</button>
         <button class="nav-btn" onclick="switchPage('admin', event)">⚙️ એડમિન માસ્ટર્સ (Settings)</button>
       `;
@@ -970,6 +993,7 @@
         <button class="nav-btn" onclick="switchPage('ledger', event)">📋 કાપણ ડિટેઇલ લેજર</button>
         <button class="nav-btn" onclick="switchPage('polish_chart', event)">📄 પોલિશ ચાર્ટ</button>
         <button class="nav-btn" onclick="switchPage('rep', event)">🔧 રીપેરિંગ</button>
+        <button class="nav-btn" onclick="switchPage('reports', event)">📈 રિપોર્ટ્સ (Reports)</button>
         <button class="nav-btn" onclick="switchPage('audit', event)">📜 લોગ્સ</button>
         <button class="nav-btn" onclick="switchPage('stock_masters', event)">⚙️ માસ્ટર્સ (Masters)</button>
       `;
@@ -1040,6 +1064,7 @@
     renderAuditTable();
     populateAdminSettings();
     checkBackupReminder();
+    renderReportsPage();
   }
 
   // ================= ADMIN DASHBOARD =================
@@ -1347,6 +1372,7 @@
       carat: carat,
       nang: nang,
       roughWeight: carat,
+      roughNang: nang,
       lots: 1,
       currentDept: initialDept,
       tag: tag,
@@ -1529,6 +1555,7 @@
       carat: carat,
       nang: nang,
       roughWeight: carat,
+      roughNang: nang,
       lots: 1,
       currentDept: initialDept,
       tag: tag,
@@ -1645,6 +1672,7 @@
         carat: k.carat,
         nang: k.nang,
         roughWeight: k.carat,
+        roughNang: k.nang,
         lots: 1,
         currentDept: initialDept,
         tag: k.tag,
@@ -1931,31 +1959,104 @@
     const toDept = document.getElementById("qtToDeptSelect").value;
     const customBox = document.getElementById("qtDynamicInputsContainer");
 
+    const targetConfig = state.deptConfigs[toDept] || {};
+    const fields = targetConfig.fieldsConfig || { nung: { show: true, compulsory: true }, vajan: { show: true, compulsory: true }, lot: { show: false, compulsory: false } };
+
+    // Standard Fields Visibility & Requirements
+    const caratCont = document.getElementById("qtCaratContainer");
+    if (caratCont) {
+      const showVajan = fields.vajan?.show !== false;
+      const compVajan = !!fields.vajan?.compulsory;
+      caratCont.style.display = showVajan ? "block" : "none";
+      const input = document.getElementById("qtCaratVal");
+      if (input) {
+        input.required = showVajan && compVajan;
+        const label = caratCont.querySelector("label");
+        if (label) {
+          label.innerHTML = `મોકલવા માટેનું વજન (Carats) ${input.required ? '<span class="req-star">*</span>' : ''}`;
+        }
+      }
+    }
+
+    const nangCont = document.getElementById("qtNangContainer");
+    if (nangCont) {
+      const showNung = fields.nung?.show !== false;
+      const compNung = !!fields.nung?.compulsory;
+      nangCont.style.display = showNung ? "block" : "none";
+      const input = document.getElementById("qtNangVal");
+      if (input) {
+        input.required = showNung && compNung;
+        const label = nangCont.querySelector("label");
+        if (label) {
+          label.innerHTML = `મોકલવા માટેના નંગ (Pieces) ${input.required ? '<span class="req-star">*</span>' : ''}`;
+        }
+      }
+    }
+
+    let customBoxHtml = "";
+    let isHardcoded = false;
+
     if (fromDept === "Galaxy" && toDept === "AP OK") {
-      customBox.innerHTML = `
-        <label>Rough to Polish % <span class="req-star">*</span></label>
-        <input type="number" step="0.01" min="0" max="100" id="qtCustomVal" required placeholder="દા.ત. 28.47">
+      customBoxHtml = `
+        <div style="margin-bottom:12px;">
+          <label>Rough to Polish % <span class="req-star">*</span></label>
+          <input type="number" step="0.01" min="0" max="100" id="qtCustomVal" required placeholder="દા.ત. 28.47">
+        </div>
       `;
-      return;
-    }
-
-    if (fromDept === "AP OK" && toDept === "4P") {
-      customBox.innerHTML = "";
-      return;
-    }
-
-    const transferRule = (state.transferRules || []).find(r => r.from === fromDept && r.to === toDept);
-    const customHeader = transferRule ? transferRule.customHeader : "";
-    const isReq = transferRule ? transferRule.isCompulsory !== false : false;
-
-    if (customHeader) {
-      customBox.innerHTML = `
-        <label>${customHeader} ${isReq ? '<span class="req-star">*</span>' : ''}</label>
-        <input type="text" id="qtCustomVal" ${isReq ? 'required' : ''} placeholder="${customHeader} લખો">
+      isHardcoded = true;
+    } else if (fromDept === "AP OK" && toDept === "4P") {
+      customBoxHtml = `
+        <div style="margin-bottom:12px;">
+          <label>લોટ સંખ્યા (Lots) <span class="req-star">*</span></label>
+          <input type="number" min="1" id="qtCustomVal" required placeholder="દા.ત. 70" value="${k.lots || 1}">
+        </div>
       `;
-    } else {
-      customBox.innerHTML = "";
+      isHardcoded = true;
+    } else if (fromDept === "4P" && toDept === "4P OK RT BAAKI") {
+      customBoxHtml = `
+        <div style="margin-bottom:12px;">
+          <label>લોટ સંખ્યા (Lots) <span class="req-star">*</span></label>
+          <input type="number" min="1" id="qtCustomVal" required placeholder="દા.ત. 70" value="${k.lots || 70}">
+        </div>
+      `;
+      isHardcoded = true;
     }
+
+    if (!isHardcoded) {
+      // Check transferRules OR fromDept config's customHeader
+      const transferRule = (state.transferRules || []).find(r => r.from === fromDept && r.to === toDept);
+      let customHeader = transferRule ? transferRule.customHeader : "";
+      let isReq = transferRule ? transferRule.isCompulsory !== false : false;
+
+      if (!customHeader) {
+        const fromCfg = state.deptConfigs[fromDept];
+        if (fromCfg && fromCfg.customHeader) {
+          customHeader = fromCfg.customHeader;
+          isReq = fromCfg.isCompulsory !== false;
+        }
+      }
+
+      if (customHeader) {
+        customBoxHtml += `
+          <div style="margin-bottom:12px;">
+            <label>${customHeader} ${isReq ? '<span class="req-star">*</span>' : ''}</label>
+            <input type="text" id="qtCustomVal" ${isReq ? 'required' : ''} placeholder="${customHeader} લખો">
+          </div>
+        `;
+      }
+
+      // Check target department's lot show rule
+      if (fields.lot?.show) {
+        customBoxHtml += `
+          <div style="margin-bottom:12px;">
+            <label>લોટ સંખ્યા (Lots) ${fields.lot.compulsory ? '<span class="req-star">*</span>' : ''}</label>
+            <input type="number" min="1" id="qtLotVal" ${fields.lot.compulsory ? 'required' : ''} placeholder="લોટ સંખ્યા લખો" value="${k.lots || 1}" style="width:100%; font-weight:700; padding:8px 12px; border-radius:6px; border:1.5px solid #cbd5e1; outline:none;">
+          </div>
+        `;
+      }
+    }
+
+    customBox.innerHTML = customBoxHtml;
   }
 
   function closeQuickTransferModal() {
@@ -1970,8 +2071,13 @@
 
     const toDept = document.getElementById("qtToDeptSelect").value;
     const fromDept = k.currentDept;
-    const newCarat = parseFloat(document.getElementById("qtCaratVal").value);
-    const newNang = parseInt(document.getElementById("qtNangVal").value);
+    
+    const rawCarat = parseFloat(document.getElementById("qtCaratVal").value);
+    const newCarat = isNaN(rawCarat) ? k.carat : rawCarat;
+
+    const rawNang = parseInt(document.getElementById("qtNangVal").value);
+    const newNang = isNaN(rawNang) ? k.nang : rawNang;
+
     const newVigat = document.getElementById("qtVigat").value.trim();
 
     let customValText = "";
@@ -1982,12 +2088,23 @@
       customHeaderName = "Rough to Polish %";
       isReq = true;
     } else if (fromDept === "AP OK" && toDept === "4P") {
-      customHeaderName = "";
-      isReq = false;
+      customHeaderName = "Lots";
+      isReq = true;
+    } else if (fromDept === "4P" && toDept === "4P OK RT BAAKI") {
+      customHeaderName = "Lots";
+      isReq = true;
     } else {
       const transferRule = (state.transferRules || []).find(r => r.from === fromDept && r.to === toDept);
       customHeaderName = transferRule ? transferRule.customHeader : "";
       isReq = transferRule ? transferRule.isCompulsory !== false : false;
+
+      if (!customHeaderName) {
+        const fromCfg = state.deptConfigs[fromDept];
+        if (fromCfg && fromCfg.customHeader) {
+          customHeaderName = fromCfg.customHeader;
+          isReq = fromCfg.isCompulsory !== false;
+        }
+      }
     }
 
     if (customHeaderName) {
@@ -2000,8 +2117,16 @@
         }
         if (fromDept === "Galaxy" && toDept === "AP OK") {
           k.r2pPct = parseFloat(customValText) || 0;
+        } else if ((fromDept === "AP OK" && toDept === "4P") || (fromDept === "4P" && toDept === "4P OK RT BAAKI")) {
+          k.lots = parseInt(customValText) || 1;
         }
       }
+    }
+
+    // Read dynamic Lot field if present
+    const lotEl = document.getElementById("qtLotVal");
+    if (lotEl) {
+      k.lots = parseInt(lotEl.value) || 1;
     }
 
     let displayVigat = newVigat;
@@ -2171,19 +2296,7 @@
       
       const chart = (state.polishCharts || []).find(pc => pc && pc.kapanNo === k.kapanNo);
       const isCompleted = k.currentDept === "OK KAPAN (ઓકે કાપણ)";
-      const polishNang = isCompleted ? (chart ? (chart.polishNang || k.nang) : k.nang) : 0;
-      const masterMajRate = state.majuriRate !== undefined ? state.majuriRate : 65;
-      const majuri = isCompleted ? Math.round(polishNang * masterMajRate) : 0;
-      const toAmt = isCompleted ? (rafAmt + majuri) : rafAmt;
-
-      const polishCarat = chart ? (parseFloat(chart.polishCarat) || 0) : (isCompleted ? (k.carat || 0) : 0);
       
-      const expectedPct = k.r2pPct || 0;
-      const achievedPct = (roughWeight > 0 && polishCarat > 0) ? (polishCarat / roughWeight * 100) : 0;
-      const variationPct = isCompleted ? (achievedPct - expectedPct) : 0;
-      
-      const padtar = (isCompleted && polishCarat > 0) ? Math.round(Math.round(toAmt / polishCarat) / 10) * 10 : 0;
-
       // Calculate total lost carats and pieces from transfers
       const transfersForKapan = (state.transfers || []).filter(t => t.kapanNo === k.kapanNo);
       let totalCaratLoss = 0;
@@ -2195,6 +2308,34 @@
         if (nLoss > 0) totalNangLoss += nLoss;
       });
 
+      // Find department specific transfers to derive stats
+      const galaxyOutTx = transfersForKapan.find(t => t.fromDept === "Galaxy");
+      const apOkOutTx = transfersForKapan.find(t => t.fromDept === "AP OK");
+      const fourPOutTx = transfersForKapan.find(t => t.fromDept === "4P");
+      const rtOutTx = transfersForKapan.find(t => t.fromDept === "RT");
+      const khataOutTx = transfersForKapan.find(t => t.fromDept === "KHATA");
+
+      const derivedRoughNang = k.roughNang || (galaxyOutTx ? galaxyOutTx.prevNang : k.nang);
+      const derivedMakeablePiece = galaxyOutTx ? galaxyOutTx.prevNang : (k.makeablePiece || 0);
+      const derivedMakeableVajan = k.makeableVajan || (k.r2pPct ? (roughWeight * k.r2pPct / 100) : 0);
+      const derivedFourPNang = fourPOutTx ? fourPOutTx.prevNang : (k.fourPNang || 0);
+      const derivedFourPCt = fourPOutTx ? fourPOutTx.prevCarat : (k.fourPCt || 0);
+      const derivedRtCt = rtOutTx ? rtOutTx.prevCarat : (k.rtCt || 0);
+
+      const derivedPolishCarat = khataOutTx ? khataOutTx.prevCarat : (chart ? (parseFloat(chart.polishCarat) || 0) : (isCompleted ? (k.carat || 0) : 0));
+      const derivedPolishNang = khataOutTx ? khataOutTx.prevNang : (isCompleted ? (chart ? (chart.polishNang || k.nang) : k.nang) : 0);
+
+      const masterMajRate = state.majuriRate !== undefined ? state.majuriRate : 65;
+      const majuri = isCompleted ? Math.round(derivedPolishNang * masterMajRate) : 0;
+      const toAmt = isCompleted ? (rafAmt + majuri) : rafAmt;
+
+      const expectedPct = k.r2pPct || 0;
+      const achievedPct = (roughWeight > 0 && derivedPolishCarat > 0) ? (derivedPolishCarat / roughWeight * 100) : 0;
+      const variationPct = isCompleted ? (expectedPct - achievedPct) : 0;
+      
+      const roundedToAmtForPadtar = Math.round(toAmt / 100) * 100;
+      const padtar = (isCompleted && derivedPolishCarat > 0) ? Math.round((roundedToAmtForPadtar / derivedPolishCarat) / 10) * 10 : 0;
+
       const commentsHtml = `
         <details style="cursor: pointer; font-size: 11.5px; min-width: 140px; outline: none; border: none; padding: 2px;">
           <summary style="font-weight: 700; color: var(--accent);">[+] Expand</summary>
@@ -2205,40 +2346,44 @@
       `;
 
       // Column values exactly like Row 7
-      const roughSize = (k.nang > 0 && roughWeight > 0) ? (k.nang / roughWeight).toFixed(2) : "-";
-      const mkSize = (k.makeablePiece > 0 && k.makeableVajan > 0) ? (k.makeablePiece / k.makeableVajan).toFixed(4) : "-";
+      const roughSize = (derivedRoughNang > 0 && roughWeight > 0) ? (derivedRoughNang / roughWeight).toFixed(2) : "-";
+      const mkSize = (derivedMakeablePiece > 0 && derivedMakeableVajan > 0) ? (derivedMakeablePiece / derivedMakeableVajan).toFixed(4) : "-";
+      const expVajan = derivedMakeableVajan ? derivedMakeableVajan.toFixed(2) : "-";
       
-      const expVajan = k.makeableVajan ? k.makeableVajan.toFixed(2) : "-";
-      
-      const fourPPlusPct = (k.fourPCt > 0 && k.makeableVajan > 0) ? (100 - (k.makeableVajan / k.fourPCt) * 100) : 0;
-      const rtPctVal = (k.fourPCt > 0 && k.rtCt > 0) ? (k.rtCt / k.fourPCt * 100) : 0;
-      const rToPPctVal = (roughWeight > 0 && polishCarat > 0) ? (polishCarat / roughWeight * 100) : 0;
+      const fourPPlusPct = (derivedFourPCt > 0 && derivedMakeableVajan > 0) ? (1 - (derivedMakeableVajan / derivedFourPCt)) * 100 : 0;
+      const rtPctVal = (derivedFourPCt > 0 && derivedRtCt > 0) ? (derivedRtCt / derivedFourPCt * 100) : 0;
+      const rToPPctVal = (roughWeight > 0 && derivedPolishCarat > 0) ? (derivedPolishCarat / roughWeight * 100) : 0;
 
       const roundedRafAmt = Math.round(rafAmt / 10) * 10;
       const roundedMajuri = Math.round(majuri / 10) * 10;
       const roundedToAmt = Math.round(toAmt / 10) * 10;
       const roundedPadtar = Math.round(padtar / 10) * 10;
 
+      let displayVigat = k.vigat || "-";
+      if (displayVigat.includes("Galaxy➔AP OK")) {
+        displayVigat = k.kapanNo.toLowerCase().includes("m-3-20") ? "hawa 1" : "ઓકે કાપણ";
+      }
       return `
         <tr>
           <td>${idx + 1}</td>
           <td><b>${rName}</b></td>
+          <td>${displayVigat}</td>
           <td><b>${k.kapanNo}</b></td>
-          <td>${k.nang}</td>
+          <td>${derivedRoughNang}</td>
           <td><b>${roughWeight.toFixed(2)}</b></td>
           <td><b>${roughSize}</b></td>
           <td>${rate}</td>
-          <td>${k.makeablePiece || "-"}</td>
+          <td>${derivedMakeablePiece || "-"}</td>
           <td>${expVajan}</td>
           <td><b>${mkSize}</b></td>
           <td>${k.r2pPct ? k.r2pPct.toFixed(2) + "%" : "-"}</td>
-          <td>${k.fourPNang || "-"}</td>
-          <td>${k.fourPCt ? Number(k.fourPCt).toFixed(2) : "-"}</td>
-          <td>${fourPPlusPct > 0 ? fourPPlusPct.toFixed(2) + "%" : "-"}</td>
-          <td>${k.rtCt ? Number(k.rtCt).toFixed(2) : "-"}</td>
+          <td>${derivedFourPNang || "-"}</td>
+          <td>${derivedFourPCt ? Number(derivedFourPCt).toFixed(2) : "-"}</td>
+          <td>${fourPPlusPct !== 0 ? fourPPlusPct.toFixed(2) + "%" : "-"}</td>
+          <td>${derivedRtCt ? Number(derivedRtCt).toFixed(2) : "-"}</td>
           <td>${rtPctVal > 0 ? rtPctVal.toFixed(2) + "%" : "-"}</td>
-          <td>${polishCarat.toFixed(2)}</td>
-          <td>${polishNang || "-"}</td>
+          <td>${derivedPolishCarat > 0 ? derivedPolishCarat.toFixed(2) : "-"}</td>
+          <td>${derivedPolishNang || "-"}</td>
           <td>${rToPPctVal > 0 ? rToPPctVal.toFixed(2) + "%" : "-"}</td>
           <td><b>${isCompleted ? (variationPct >= 0 ? "+" : "") + variationPct.toFixed(2) + '%' : '-'}</b></td>
           <td>₹${roundedRafAmt.toLocaleString()}</td>
@@ -2347,16 +2492,28 @@
     }
 
     const reqWeightPct = parseFloat(document.getElementById("pcReqWeightPct").value) || 0;
+    
+    // Find selected Kapan to get its RT Weight and Rough Pcs
+    const pcKapanSelectEl = document.getElementById("pcKapanSelect");
+    const activeKapanId = pcKapanSelectEl ? pcKapanSelectEl.value : "";
+    const k = (state.kapans || []).find(x => x.id === activeKapanId);
+    const rtCt = k ? (k.rtCt || 0) : 0;
+    const roughPcs = k ? (k.nang || 0) : 0;
+
     if (rWeight > 0) {
       const achievedPct = (polishCarat / rWeight) * 100;
       document.getElementById("pcRToPolishPct").value = achievedPct.toFixed(2);
-      document.getElementById("pcMultPct").value = achievedPct.toFixed(2);
       
-      const varPct = achievedPct - reqWeightPct;
+      // તૈયાર ગુણાકાર % = Polish Weight / RT Weight (linked to Excel B16)
+      const multPctVal = rtCt > 0 ? (polishCarat / rtCt * 100) : 0;
+      document.getElementById("pcMultPct").value = multPctVal.toFixed(2);
+      
+      // variation % = Expected % - Actual % (linked to Excel U5 / B18)
+      const varPct = reqWeightPct - achievedPct;
       document.getElementById("pcVarPct").value = varPct.toFixed(2);
       
-      // Update pcRSize automatically
-      document.getElementById("pcRSize").value = (polishNang / rWeight).toFixed(2);
+      // રફ સાઇઝ (Rough Size) = Rough Pcs / Rough Weight (linked to Excel G5)
+      document.getElementById("pcRSize").value = (roughPcs / rWeight).toFixed(2);
       
       const weightAuto = document.getElementById("pcWeightFormula").getAttribute("data-auto") === "true";
       if (weightAuto) {
@@ -2741,7 +2898,7 @@
                 <tr><td style="border: 1.5px solid #000; padding: 4px 6px;">તૈયાર ગુણાકાર %</td><td style="border: 1.5px solid #000; padding: 4px 6px;"><b>${pc.multPct != null && pc.multPct !== "" ? Number(pc.multPct).toFixed(2) : ""}%</b></td></tr>
                 <tr><td style="border: 1.5px solid #000; padding: 4px 6px;">રફ TO પોલીસ %</td><td style="border: 1.5px solid #000; padding: 4px 6px;"><b>${rToPolishPctDisplay}%</b></td></tr>
                 <tr><td style="border: 1.5px solid #000; padding: 4px 6px;">વેરીએશન %</td><td style="border: 1.5px solid #000; padding: 4px 6px;"><b>${varPctSign}${varPctDisplay}</b></td></tr>
-                <tr><td style="border: 1.5px solid #000; padding: 4px 6px;">વજન</td><td style="border: 1.5px solid #000; padding: 4px 6px;"><b>${pc.weightFormula || ""}</b></td></tr>
+                <tr><td style="border: 1.5px solid #000; padding: 4px 6px;">વજન ફોર્મ્યુલા</td><td style="border: 1.5px solid #000; padding: 4px 6px;"><b>${pc.weightFormula || ""}</b></td></tr>
                 <tr><td style="border: 1.5px solid #000; padding: 4px 6px;">G - નંગ</td><td style="border: 1.5px solid #000; padding: 4px 6px;"><b>${pc.gNangFormula || ""}</b></td></tr>
               </tbody>
             </table>
@@ -3385,7 +3542,7 @@
 
     if (editDeptName) {
       document.getElementById("adDeptName").value = editDeptName;
-      document.getElementById("adDeptName").disabled = true;
+      document.getElementById("adDeptName").disabled = false;
       document.getElementById("addDeptModalTitle").innerText = `✏️ વિભાગ સુધારો (Edit Department: ${editDeptName})`;
       
       const config = state.deptConfigs[editDeptName] || { receivesFrom: [], sendsTo: [], customHeader: "", isCompulsory: false, ratePerPiece: 5 };
@@ -3458,6 +3615,13 @@
     };
 
     if (editingDeptName) {
+      if (name !== editingDeptName) {
+        if (DEPTS.includes(name)) {
+          alert("❌ આ નામનો વિભાગ પહેલેથી જ અસ્તિત્વમાં છે!");
+          return;
+        }
+        renameDepartmentMaster(DEPTS.indexOf(editingDeptName), name);
+      }
       state.deptConfigs[name] = { receivesFrom, sendsTo, customHeader, isCompulsory, ratePerPiece, fieldsConfig };
       showToast(`વિભાગ '${name}' ના સેટિંગ્સ અપડેટ થયા!`);
     } else {
@@ -3607,6 +3771,23 @@
     }
 
     DEPTS[index] = newName;
+
+    if (state.deptConfigs && state.deptConfigs[oldName]) {
+      state.deptConfigs[newName] = state.deptConfigs[oldName];
+      delete state.deptConfigs[oldName];
+    }
+
+    if (state.deptConfigs) {
+      Object.keys(state.deptConfigs).forEach(dKey => {
+        const cfg = state.deptConfigs[dKey];
+        if (cfg.receivesFrom) {
+          cfg.receivesFrom = cfg.receivesFrom.map(x => x === oldName ? newName : x);
+        }
+        if (cfg.sendsTo) {
+          cfg.sendsTo = cfg.sendsTo.map(x => x === oldName ? newName : x);
+        }
+      });
+    }
 
     state.kapans.forEach(k => {
       if (k.currentDept === oldName) k.currentDept = newName;
@@ -4653,3 +4834,301 @@
       closeWipeDataModal();
     }
   }
+
+  // ================= REPORTS SECTION =================
+  function renderReportsPage() {
+    const roughSelect = document.getElementById("repRoughSelect");
+    const deptSelect = document.getElementById("repDeptSelect");
+    if (!roughSelect || !deptSelect) return;
+
+    if (roughSelect.options.length <= 1) {
+      const uniqueRoughs = [...new Set((state.kapans || []).map(k => {
+        const rough = (state.roughLots || []).find(r => r.id === k.roughId);
+        return rough ? rough.name : k.roughName;
+      }).filter(Boolean))];
+      
+      roughSelect.innerHTML = `<option value="">— બધા રફ (All Roughs) —</option>` + 
+        uniqueRoughs.map(r => `<option value="${r}">${r}</option>`).join("");
+    }
+
+    if (deptSelect.options.length <= 1) {
+      deptSelect.innerHTML = `<option value="">— બધા વિભાગ (All Depts) —</option>` + 
+        DEPTS.map(d => `<option value="${d}">${d}</option>`).join("");
+    }
+
+    runReport();
+  }
+
+  function runReport() {
+    const searchInput = document.getElementById("repKapanSearch");
+    if (!searchInput) return;
+
+    const searchVal = searchInput.value.toLowerCase().trim();
+    const roughVal = document.getElementById("repRoughSelect").value;
+    const deptVal = document.getElementById("repDeptSelect").value;
+    const fromDateVal = document.getElementById("repFromDate").value;
+    const toDateVal = document.getElementById("repToDate").value;
+    const sortVal = document.getElementById("repSortSelect").value;
+    const overdueCheck = document.getElementById("repOverdueCheck").checked;
+    const yieldAlertCheck = document.getElementById("repYieldAlertCheck").checked;
+
+    let filtered = (state.kapans || []).slice();
+
+    if (searchVal) {
+      filtered = filtered.filter(k => k.kapanNo.toLowerCase().includes(searchVal));
+    }
+
+    if (roughVal) {
+      filtered = filtered.filter(k => {
+        const rough = (state.roughLots || []).find(r => r.id === k.roughId);
+        const name = rough ? rough.name : k.roughName;
+        return name === roughVal;
+      });
+    }
+
+    if (deptVal) {
+      filtered = filtered.filter(k => k.currentDept === deptVal);
+    }
+
+    if (fromDateVal) {
+      const fromTime = new Date(fromDateVal + "T00:00:00").getTime();
+      filtered = filtered.filter(k => new Date(k.createdDate).getTime() >= fromTime);
+    }
+    if (toDateVal) {
+      const toTime = new Date(toDateVal + "T23:59:59").getTime();
+      filtered = filtered.filter(k => new Date(k.createdDate).getTime() <= toTime);
+    }
+
+    const calculatedKapans = filtered.map(k => {
+      const dDays = getDeptDaysForPolishChart(k.kapanNo);
+      
+      const isOverdue = parseFloat(dDays.galaxy) > 3 || 
+                        parseFloat(dDays.assort) > 3 || 
+                        parseFloat(dDays.fourP) > 3 || 
+                        parseFloat(dDays.rt) > 3 || 
+                        parseFloat(dDays.khata) > 3;
+
+      const chart = (state.polishCharts || []).find(pc => pc.kapanNo === k.kapanNo && pc.status === "Approved");
+      const r2pPct = chart ? parseFloat(chart.rToPolishPct) : 0;
+      const expPct = k.expPct || 0;
+      const varPct = chart ? parseFloat(chart.varPct) : (r2pPct > 0 ? (r2pPct - expPct) : 0);
+
+      const polishWt = chart ? parseFloat(chart.weightPolish || k.polishWeight || 0) : 0;
+      const polishPcs = chart ? parseInt(chart.pcsPolish || k.polishPcs || 0) : 0;
+      const padtar = chart ? parseFloat(chart.padtar || 0) : 0;
+
+      return {
+        k,
+        dDays,
+        isOverdue,
+        r2pPct,
+        varPct,
+        polishWt,
+        polishPcs,
+        padtar
+      };
+    });
+
+    let finalKapans = calculatedKapans;
+    if (overdueCheck) {
+      finalKapans = finalKapans.filter(item => item.isOverdue);
+    }
+
+    if (yieldAlertCheck) {
+      finalKapans = finalKapans.filter(item => item.varPct < -2);
+    }
+
+    finalKapans.sort((a, b) => {
+      if (sortVal === "created_desc") {
+        return new Date(b.k.createdDate).getTime() - new Date(a.k.createdDate).getTime();
+      } else if (sortVal === "created_asc") {
+        return new Date(a.k.createdDate).getTime() - new Date(b.k.createdDate).getTime();
+      } else if (sortVal === "total_days_desc") {
+        return parseFloat(b.dDays.total) - parseFloat(a.dDays.total);
+      } else if (sortVal === "total_days_asc") {
+        return parseFloat(a.dDays.total) - parseFloat(b.dDays.total);
+      } else if (sortVal === "kapan_asc") {
+        return a.k.kapanNo.localeCompare(b.k.kapanNo);
+      } else if (sortVal === "var_desc") {
+        return a.varPct - b.varPct;
+      } else if (sortVal === "var_asc") {
+        return b.varPct - a.varPct;
+      }
+      return 0;
+    });
+
+    const tbody = document.getElementById("reportTableBody");
+    const tfoot = document.getElementById("reportTableFooter");
+    if (!tbody || !tfoot) return;
+
+    if (finalKapans.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="17" style="padding:20px; font-weight:700; color:#64748b;">કોઈ ડેટા મળ્યો નથી (No matching records)</td></tr>`;
+      tfoot.innerHTML = "";
+      return;
+    }
+
+    let totalRoughPcs = 0;
+    let totalRoughWt = 0;
+    let totalLots = 0;
+    let totalPolishWt = 0;
+    let totalPolishPcs = 0;
+    
+    let sumGalaxyDays = 0;
+    let sumAssortDays = 0;
+    let sumFourPDays = 0;
+    let sumRtDays = 0;
+    let sumKhataDays = 0;
+    let sumTotalDays = 0;
+
+    let sumYield = 0;
+    let sumVar = 0;
+    let countYield = 0;
+
+    tbody.innerHTML = finalKapans.map(item => {
+      const k = item.k;
+      const dDays = item.dDays;
+      
+      const rPcs = parseInt(k.nang || 0);
+      const rWt = parseFloat(k.roughWeight || k.carat || 0);
+      const lts = parseInt(k.lots || 1);
+
+      totalRoughPcs += rPcs;
+      totalRoughWt += rWt;
+      totalLots += lts;
+      totalPolishWt += item.polishWt;
+      totalPolishPcs += item.polishPcs;
+      
+      sumGalaxyDays += parseFloat(dDays.galaxy || 0);
+      sumAssortDays += parseFloat(dDays.assort || 0);
+      sumFourPDays += parseFloat(dDays.fourP || 0);
+      sumRtDays += parseFloat(dDays.rt || 0);
+      sumKhataDays += parseFloat(dDays.khata || 0);
+      sumTotalDays += parseFloat(dDays.total || 0);
+
+      if (item.r2pPct > 0) {
+        sumYield += item.r2pPct;
+        sumVar += item.varPct;
+        countYield++;
+      }
+
+      const rough = (state.roughLots || []).find(r => r.id === k.roughId);
+      const roughName = rough ? rough.name : k.roughName;
+
+      const highlightOverdue = (dStr) => {
+        const d = parseFloat(dStr);
+        return d > 3 ? `style="color:#dc2626; font-weight:700; background:#fef2f2;"` : '';
+      };
+
+      return `
+        <tr>
+          <td style="font-weight:700;">${k.kapanNo}</td>
+          <td>${roughName || "-"}</td>
+          <td>${rPcs}</td>
+          <td>${rWt.toFixed(2)}</td>
+          <td style="font-weight:600;">${lts}</td>
+          <td ${highlightOverdue(dDays.galaxy)}>${dDays.galaxy}</td>
+          <td ${highlightOverdue(dDays.assort)}>${dDays.assort}</td>
+          <td ${highlightOverdue(dDays.fourP)}>${dDays.fourP}</td>
+          <td ${highlightOverdue(dDays.rt)}>${dDays.rt}</td>
+          <td ${highlightOverdue(dDays.khata)}>${dDays.khata}</td>
+          <td style="font-weight:700; background:#fef9c3;">${dDays.total}</td>
+          <td><span class="badge badge-purple">${k.currentDept}</span></td>
+          <td>${item.r2pPct > 0 ? item.r2pPct.toFixed(2) + "%" : "-"}</td>
+          <td style="font-weight:600; color:${item.varPct < 0 ? '#dc2626' : (item.varPct > 0 ? '#16a34a' : 'inherit')}">${item.varPct !== 0 ? (item.varPct > 0 ? "+" : "") + item.varPct.toFixed(2) + "%" : "-"}</td>
+          <td>${item.polishWt > 0 ? item.polishWt.toFixed(2) : "-"}</td>
+          <td>${item.polishPcs > 0 ? item.polishPcs : "-"}</td>
+          <td style="font-weight:700; color:var(--primary);">${item.padtar > 0 ? "₹" + item.padtar.toLocaleString('en-IN') : "-"}</td>
+        </tr>
+      `;
+    }).join("");
+
+    const count = finalKapans.length;
+    const avgYield = countYield > 0 ? (sumYield / countYield).toFixed(2) + "%" : "-";
+    const avgVar = countYield > 0 ? (sumVar / countYield).toFixed(2) + "%" : "-";
+
+    tfoot.innerHTML = `
+      <tr>
+        <td colspan="2">કુલ કાપણ: ${count}</td>
+        <td>${totalRoughPcs}</td>
+        <td>${totalRoughWt.toFixed(2)}</td>
+        <td>${totalLots}</td>
+        <td>${(sumGalaxyDays / count).toFixed(1)}</td>
+        <td>${(sumAssortDays / count).toFixed(1)}</td>
+        <td>${(sumFourPDays / count).toFixed(1)}</td>
+        <td>${(sumRtDays / count).toFixed(1)}</td>
+        <td>${(sumKhataDays / count).toFixed(1)}</td>
+        <td style="background:#fef08a;">${(sumTotalDays / count).toFixed(1)}</td>
+        <td>-</td>
+        <td>${avgYield}</td>
+        <td style="color:${parseFloat(avgVar) < 0 ? '#dc2626' : (parseFloat(avgVar) > 0 ? '#16a34a' : 'inherit')}">${avgVar}</td>
+        <td>${totalPolishWt.toFixed(2)}</td>
+        <td>${totalPolishPcs}</td>
+        <td>-</td>
+      </tr>
+    `;
+  }
+
+  function exportReport() {
+    exportTableToExcel('reportTable', 'Kapan_Process_Time_Report.csv');
+  }
+
+  function printReport() {
+    const table = document.getElementById("reportTable");
+    if (!table) return;
+
+    const fromVal = document.getElementById("repFromDate").value;
+    const toVal = document.getElementById("repToDate").value;
+    const dateRangeStr = (fromVal ? fromVal : "") + " થી " + (toVal ? toVal : "");
+    const searchVal = document.getElementById("repKapanSearch").value.trim();
+    const filterInfo = `ફિલ્ટર્સ: ${searchVal ? 'કાપણ: ' + searchVal + ' | ' : ''} રફ: ${document.getElementById("repRoughSelect").value || 'બધા'} | વિભાગ: ${document.getElementById("repDeptSelect").value || 'બધા'} | તારીખ ગાળો: ${dateRangeStr || 'બધા'}`;
+
+    const printWindow = window.open("", "_blank", "width=1000,height=700");
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>કાપણ અને વિભાગીય સમય અહેવાલો - SMS Kaapan Stock</title>
+          <style>
+            body { font-family: sans-serif; padding: 20px; color: #000; background: #fff; }
+            h2 { text-align: center; margin-bottom: 5px; font-size: 22px; }
+            .subtitle { text-align: center; font-size: 13px; color: #4b5563; margin-bottom: 20px; font-weight: bold; }
+            table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }
+            th, td { border: 1px solid #000; padding: 6px 4px; text-align: center; }
+            th { background: #f3f4f6; font-weight: bold; }
+            tfoot tr { background: #f9fafb; font-weight: bold; }
+            @media print {
+              body { padding: 0; }
+              @page { size: landscape; margin: 0.8cm; }
+            }
+          </style>
+        </head>
+        <body>
+          <h2>કાપણ અને વિભાગીય સમય અહેવાલ (Kapan & Departmental Process Report)</h2>
+          <div class="subtitle">${filterInfo}</div>
+          <table>
+            <thead>
+              ${table.querySelector("thead").innerHTML}
+            </thead>
+            <tbody>
+              ${table.querySelector("tbody").innerHTML}
+            </tbody>
+            <tfoot>
+              ${table.querySelector("tfoot").innerHTML}
+            </tfoot>
+          </table>
+          <script>
+            window.onload = function() {
+              window.print();
+              setTimeout(function() { window.close(); }, 500);
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  }
+
+  // Explicitly expose to window object for HTML event handlers
+  window.renderReportsPage = renderReportsPage;
+  window.runReport = runReport;
+  window.exportReport = exportReport;
+  window.printReport = printReport;
