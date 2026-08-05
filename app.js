@@ -3207,26 +3207,43 @@
           } else if (dIdx < currentDeptIdx) {
             const transfersForKapan = (state.transfers || []).filter(t => t.kapanNo === k.kapanNo);
             const transferFromD = transfersForKapan.find(t => t.fromDept === d);
-            const transferToD = transfersForKapan.find(t => t.toDept === d);
-            const entryTime = transferToD ? new Date(transferToD.timestamp) : (d === "Galaxy" ? new Date(k.createdDate) : null);
-            const exitTime = transferFromD ? new Date(transferFromD.timestamp) : null;
             
-            let daysHtml = "";
-            if (entryTime && exitTime) {
-              const diffDays = Math.max(0.1, parseFloat(((exitTime - entryTime) / (1000 * 60 * 60 * 24)).toFixed(1)));
-              daysHtml = `<div style="font-size: 10.5px; color: #64748b; margin-top: 4px; font-weight: 600;">${diffDays}</div>`;
+            if (!transferFromD) {
+              html += `<td style="border: 1px solid #e2e8f0; padding: 8px;"></td>`;
+            } else {
+              const transferToD = transfersForKapan.find(t => t.toDept === d);
+              const entryTime = transferToD ? new Date(transferToD.timestamp) : (d === "Galaxy" ? new Date(k.createdDate) : null);
+              const exitTime = new Date(transferFromD.timestamp);
+              
+              let daysHtml = "";
+              if (entryTime && exitTime) {
+                const diffDays = Math.max(0.1, parseFloat(((exitTime - entryTime) / (1000 * 60 * 60 * 24)).toFixed(1)));
+                daysHtml = `<div style="font-size: 10.5px; color: #64748b; margin-top: 3px; font-weight: 600;">${diffDays}</div>`;
+              }
+              
+              let customValDisplay = "";
+              if (transferFromD.vigat) {
+                const match = transferFromD.vigat.match(/\[(.*?)\]/);
+                if (match) {
+                  const inner = match[1];
+                  const parts = inner.split(":");
+                  if (parts.length > 1) {
+                    customValDisplay = `<div style="font-size: 10.5px; color: var(--primary); font-weight: 700; margin-top: 3px;">${parts[1].trim()}</div>`;
+                  } else {
+                    customValDisplay = `<div style="font-size: 10.5px; color: var(--primary); font-weight: 700; margin-top: 3px;">${inner.trim()}</div>`;
+                  }
+                }
+              }
+              
+              html += `
+                <td style="opacity: 0.55; filter: contrast(85%); border: 1px solid #e2e8f0; padding: 8px; text-align: center; vertical-align: middle; line-height: 1.25;">
+                  <div style="font-weight:700; color:#334155; font-size:13px;">${transferFromD.nang}</div>
+                  <div style="font-weight:600; color:#475569; font-size:11.5px; margin-top: 2px;">${Number(transferFromD.carat).toFixed(2)}</div>
+                  ${customValDisplay}
+                  ${daysHtml}
+                </td>
+              `;
             }
-            
-            const outNang = transferFromD ? transferFromD.nang : "-";
-            const outCarat = transferFromD ? Number(transferFromD.carat).toFixed(2) : "-";
-            
-            html += `
-              <td style="opacity: 0.55; filter: contrast(85%); border: 1px solid #e2e8f0; padding: 8px; text-align: center; vertical-align: middle;">
-                <div style="font-weight:700; color:#475569; font-size:12px;">${outNang} Pis</div>
-                <div style="font-weight:600; color:#64748b; font-size:10.5px;">${outCarat} Cts</div>
-                ${daysHtml}
-              </td>
-            `;
           } else {
             html += `<td style="color:#cbd5e1; font-weight:normal; border: 1px solid #e2e8f0; padding: 10px; text-align: center; vertical-align: middle;">-</td>`;
           }
