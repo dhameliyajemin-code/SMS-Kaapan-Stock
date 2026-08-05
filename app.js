@@ -2292,7 +2292,7 @@
       const rate = k.roughRate !== undefined ? k.roughRate : (rough ? (rough.rate || 2730) : 2730);
       const roughWeight = k.roughWeight || k.carat;
       const totalRoughCarats = rough ? (rough.carats || roughWeight) : roughWeight;
-      const rafAmt = rough ? (rough.finalRoughAmt ? (rough.finalRoughAmt * (roughWeight / totalRoughCarats)) : (roughWeight * rate)) : 0;
+      const rafAmt = roughWeight * rate;
       
       const chart = (state.polishCharts || []).find(pc => pc && pc.kapanNo === k.kapanNo);
       const isCompleted = k.currentDept === "OK KAPAN (ઓકે કાપણ)";
@@ -2316,14 +2316,14 @@
       const khataOutTx = transfersForKapan.find(t => t.fromDept === "KHATA");
 
       const derivedRoughNang = k.roughNang || (galaxyOutTx ? galaxyOutTx.prevNang : k.nang);
-      const derivedMakeablePiece = galaxyOutTx ? galaxyOutTx.prevNang : (k.makeablePiece || 0);
+      const derivedMakeablePiece = galaxyOutTx ? galaxyOutTx.nang : (k.makeablePiece || 0);
       const derivedMakeableVajan = k.makeableVajan || (k.r2pPct ? (roughWeight * k.r2pPct / 100) : 0);
-      const derivedFourPNang = fourPOutTx ? fourPOutTx.prevNang : (k.fourPNang || 0);
-      const derivedFourPCt = fourPOutTx ? fourPOutTx.prevCarat : (k.fourPCt || 0);
-      const derivedRtCt = rtOutTx ? rtOutTx.prevCarat : (k.rtCt || 0);
+      const derivedFourPNang = fourPOutTx ? fourPOutTx.nang : (k.fourPNang || 0);
+      const derivedFourPCt = fourPOutTx ? fourPOutTx.carat : (k.fourPCt || 0);
+      const derivedRtCt = rtOutTx ? rtOutTx.carat : (k.rtCt || 0);
 
-      const derivedPolishCarat = khataOutTx ? khataOutTx.prevCarat : (chart ? (parseFloat(chart.polishCarat) || 0) : (isCompleted ? (k.carat || 0) : 0));
-      const derivedPolishNang = khataOutTx ? khataOutTx.prevNang : (isCompleted ? (chart ? (chart.polishNang || k.nang) : k.nang) : 0);
+      const derivedPolishCarat = khataOutTx ? khataOutTx.carat : (chart ? (parseFloat(chart.polishCarat) || 0) : (isCompleted ? (k.carat || 0) : 0));
+      const derivedPolishNang = khataOutTx ? khataOutTx.nang : (isCompleted ? (chart ? (chart.polishNang || k.nang) : k.nang) : 0);
 
       const masterMajRate = state.majuriRate !== undefined ? state.majuriRate : 65;
       const majuri = isCompleted ? Math.round(derivedPolishNang * masterMajRate) : 0;
