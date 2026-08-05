@@ -3024,6 +3024,71 @@
     const container = document.getElementById("workableReportContainer");
     if (!container) return;
 
+    function getDeptHistoryValues(k, deptName) {
+      const transfersForKapan = (state.transfers || []).filter(t => t.kapanNo.trim().toLowerCase() === k.kapanNo.trim().toLowerCase());
+      const transferFromD = transfersForKapan.find(t => t.fromDept === deptName);
+      
+      let nang = null;
+      let carat = null;
+      let customVal = "";
+      let entryTime = null;
+      let exitTime = null;
+      
+      if (transferFromD) {
+        nang = transferFromD.nang;
+        carat = transferFromD.carat;
+        exitTime = new Date(transferFromD.timestamp);
+        
+        const transferToD = transfersForKapan.find(t => t.toDept === deptName);
+        entryTime = transferToD ? new Date(transferToD.timestamp) : (deptName === "Galaxy" ? new Date(k.createdDate) : null);
+        
+        if (transferFromD.vigat) {
+          const match = transferFromD.vigat.match(/\[(.*?)\]/);
+          if (match) {
+            const inner = match[1];
+            const parts = inner.split(":");
+            customVal = parts.length > 1 ? parts[1].trim() : inner.trim();
+          }
+        }
+      } else {
+        // Fallback to Kapan properties if no transfer record exists
+        const depts = DEPTS;
+        const curIdx = depts.indexOf(k.currentDept);
+        const targetIdx = depts.indexOf(deptName);
+        
+        if (targetIdx < curIdx) {
+          // Only fall back if the department has actually been passed
+          if (deptName === "Galaxy" || deptName === "AP OK") {
+            nang = k.roughNang;
+            carat = k.roughWeight;
+            if (deptName === "Galaxy" && k.r2pPct) {
+              customVal = k.r2pPct;
+            }
+          } else if (deptName === "4P" || deptName === "4P OK RT BAAKI") {
+            nang = k.fourPNang || k.roughNang;
+            carat = k.fourPCt || k.roughWeight;
+            if (deptName === "4P" && k.lots) {
+              customVal = k.lots;
+            }
+          } else if (deptName === "RT" || deptName === "RT OK KHATA BAAKI") {
+            nang = k.rtNang || k.fourPNang || k.roughNang;
+            carat = k.rtCt || k.fourPCt || k.roughWeight;
+          } else if (deptName === "KHATA") {
+            nang = k.makeablePiece || k.nang;
+            carat = k.makeableVajan || k.carat;
+          }
+        }
+      }
+      
+      let daysHtml = "";
+      if (entryTime && exitTime) {
+        const diffDays = Math.max(0.1, parseFloat(((exitTime - entryTime) / (1000 * 60 * 60 * 24)).toFixed(1)));
+        daysHtml = `<div style="font-size: 10.5px; color: #64748b; margin-top: 3px; font-weight: 600;">${diffDays}</div>`;
+      }
+      
+      return { nang, carat, customVal, daysHtml };
+    }
+
     const query = (document.getElementById("workableSearch") || {}).value || "";
 
     const activeList = (state.kapans || []).filter(k => isMatchSearch(k.kapanNo, query));
@@ -3205,42 +3270,21 @@
               </td>
             `;
           } else if (dIdx < currentDeptIdx) {
-            const transfersForKapan = (state.transfers || []).filter(t => t.kapanNo === k.kapanNo);
-            const transferFromD = transfersForKapan.find(t => t.fromDept === d);
+            const hist = getDeptHistoryValues(k, d);
             
-            if (!transferFromD) {
+            if (hist.nang === null) {
               html += `<td style="border: 1px solid #e2e8f0; padding: 8px;"></td>`;
             } else {
-              const transferToD = transfersForKapan.find(t => t.toDept === d);
-              const entryTime = transferToD ? new Date(transferToD.timestamp) : (d === "Galaxy" ? new Date(k.createdDate) : null);
-              const exitTime = new Date(transferFromD.timestamp);
-              
-              let daysHtml = "";
-              if (entryTime && exitTime) {
-                const diffDays = Math.max(0.1, parseFloat(((exitTime - entryTime) / (1000 * 60 * 60 * 24)).toFixed(1)));
-                daysHtml = `<div style="font-size: 10.5px; color: #64748b; margin-top: 3px; font-weight: 600;">${diffDays}</div>`;
-              }
-              
-              let customValDisplay = "";
-              if (transferFromD.vigat) {
-                const match = transferFromD.vigat.match(/\[(.*?)\]/);
-                if (match) {
-                  const inner = match[1];
-                  const parts = inner.split(":");
-                  if (parts.length > 1) {
-                    customValDisplay = `<div style="font-size: 10.5px; color: var(--primary); font-weight: 700; margin-top: 3px;">${parts[1].trim()}</div>`;
-                  } else {
-                    customValDisplay = `<div style="font-size: 10.5px; color: var(--primary); font-weight: 700; margin-top: 3px;">${inner.trim()}</div>`;
-                  }
-                }
-              }
+              const customValDisplay = hist.customVal 
+                ? `<div style="font-size: 10.5px; color: var(--primary); font-weight: 700; margin-top: 3px;">${hist.customVal}</div>` 
+                : "";
               
               html += `
                 <td style="opacity: 0.55; filter: contrast(85%); border: 1px solid #e2e8f0; padding: 8px; text-align: center; vertical-align: middle; line-height: 1.25;">
-                  <div style="font-weight:700; color:#334155; font-size:13px;">${transferFromD.nang}</div>
-                  <div style="font-weight:600; color:#475569; font-size:11.5px; margin-top: 2px;">${Number(transferFromD.carat).toFixed(2)}</div>
+                  <div style="font-weight:700; color:#334155; font-size:13px;">${hist.nang}</div>
+                  <div style="font-weight:600; color:#475569; font-size:11.5px; margin-top: 2px;">${Number(hist.carat).toFixed(2)}</div>
                   ${customValDisplay}
-                  ${daysHtml}
+                  ${hist.daysHtml}
                 </td>
               `;
             }
