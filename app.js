@@ -4219,33 +4219,9 @@
   }
 
   async function deleteTransferLog(transferId) {
-    const t = state.transfers.find(x => x.id === transferId);
-    if (!t) return;
-
-    const pass = prompt("🔐 ટ્રાન્સફર લોગ ડીલીટ કરવા માટે એડિટ પાસવર્ડ લખો:");
-    if (pass === null) return;
-    const passHash = await sha256(pass);
-    if (passHash !== state.auth.editPassHash) {
-      alert("❌ પાસવર્ડ ખોટો છે!");
-      return;
-    }
-
-    if (confirm(`⚠️ શું તમે ખરેખર કાપણ ${t.kapanNo} ની આ ટ્રાન્સફર એન્ટ્રી લોગ ડીલીટ કરવા માંગો છો? આનાથી કાપણની પ્રવાહ સ્થિતિ બદલાશે નહીં, ફક્ત હિસ્ટ્રી માંથી ટ્રાન્સફર રેકોર્ડ ડીલીટ થશે.`)) {
-      state.transfers = (state.transfers || []).filter(x => x.id !== transferId);
-
-      state.audits.unshift({
-        id: "AUD" + Date.now(),
-        timestamp: new Date().toISOString(),
-        action: "DELETE_TRANSFER_LOG",
-        target: t.kapanNo,
-        prevData: `From: ${t.fromDept}, To: ${t.toDept}, Carat: ${t.carat}, Nang: ${t.nang}`,
-        newData: "Deleted Log"
-      });
-
-      saveState();
-      renderAll();
-      showToast(`🗑️ ટ્રાન્સફર એન્ટ્રી ડીલીટ કરી દીધી!`);
-    }
+    // Delegate to undoTransfer so the Kapan state is correctly reverted
+    // and removed from Live Stock and Detailed Ledger.
+    await undoTransfer(transferId);
   }
 
   function openEditModal(id) {
@@ -4303,28 +4279,44 @@
   }
 
   async function deleteKapanPrompt(id) {
-    const pass = prompt("ડીલીટ કરવા માટે એડિટ/ડીલીટ પાસવર્ડ લખો:");
-    if (pass === null) return;
-    const passHash = await sha256(pass);
-    if (passHash === state.auth.editPassHash) {
-      const k = (state.kapans || []).find(x => x.id === id);
-      if (!k) return;
+    const k = (state.kapans || []).find(x => x.id === id);
+    if (!k) return;
 
-      state.audits.unshift({
-        id: "AUD" + Date.now(),
-        action: "DELETE",
-        target: k.kapanNo,
-        prevData: `Carat: ${k.carat}, Dept: ${k.currentDept}`,
-        newData: "ડીલીટ કર્યું",
-        timestamp: new Date().toISOString()
-      });
+    // Check if this Kapan has any transfer records
+    const transfersForKapan = (state.transfers || []).filter(t => t.kapanNo && typeof t.kapanNo === "string" && t.kapanNo.trim().toLowerCase() === k.kapanNo.trim().toLowerCase());
+    
+    // Sort by timestamp descending to get the latest transfer
+    transfersForKapan.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
+    if (transfersForKapan.length > 0) {
+      const latestT = transfersForKapan[0];
+      const confirmMsg = `⚠️ કાપણ ${k.kapanNo} હાલમાં ${k.currentDept} વિભાગમાં છે.\nશું તમે આ કાપણની છેલ્લી ટ્રાન્સફર એન્ટ્રી (${latestT.fromDept} થી ${latestT.toDept}) ડીલીટ/રીવર્ટ કરવા માંગો છો?\n\n(આનાથી કાપણ પાછું ${latestT.fromDept} વિભાગમાં જશે અને છેલ્લી એન્ટ્રી ડીલીટ થશે.)`;
+      
+      if (confirm(confirmMsg)) {
+        await undoTransfer(latestT.id);
+      }
+    } else {
+      // No transfers: delete the entire Kapan
+      const pass = prompt("આ કાપણની કોઈ ટ્રાન્સફર હિસ્ટ્રી નથી.\nઆખું કાપણ ડીલીટ કરવા માટે એડિટ/ડીલીટ પાસવર્ડ લખો:");
+      if (pass === null) return;
+      const passHash = await sha256(pass);
+      if (passHash === state.auth.editPassHash) {
+        state.audits.unshift({
+          id: "AUD" + Date.now(),
+          action: "DELETE",
+          target: k.kapanNo,
+          prevData: `Carat: ${k.carat}, Dept: ${k.currentDept}`,
+          newData: "ડીલીટ કર્યું",
+          timestamp: new Date().toISOString()
+        });
 
-      state.kapans = (state.kapans || []).filter(x => x.id !== id);
-      saveState();
-      renderAll();
-      showToast("કાપણ ડીલીટ થયું!", "warning");
-    } else if (pass !== null) {
-      alert("❌ પાસવર્ડ ખોટો છે!");
+        state.kapans = (state.kapans || []).filter(x => x.id !== id);
+        saveState();
+        renderAll();
+        showToast("કાપણ ડીલીટ થયું!", "warning");
+      } else {
+        alert("❌ પાસવર્ડ ખોટો છે!");
+      }
     }
   }
 
