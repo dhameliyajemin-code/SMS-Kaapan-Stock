@@ -514,7 +514,7 @@
           repairs: parsed.repairs || [],
           audits: parsed.audits || [],
           polishCharts: parsed.polishCharts || [],
-          prunedMockData_v5: parsed.prunedMockData_v5 || false,
+          prunedMockData_v6: parsed.prunedMockData_v6 || false,
           transferRules: parsed.transferRules || [
             { from: "Galaxy", to: "4P", customHeader: "GLX Top Size", isCompulsory: true },
             { from: "4P", to: "RT", customHeader: "4P Output Carats", isCompulsory: true }
@@ -602,7 +602,7 @@
 
   function checkInitialData() {
     // Run cleanup of old mock data EXACTLY ONCE to protect future live entries
-    if (!state.prunedMockData_v5 || (state.kapans && state.kapans.length < 5)) {
+    if (!state.prunedMockData_v6 || (state.kapans && state.kapans.length < 5)) {
       state.roughLots = [
         { id: "R_AL65", name: "try 000", party: "Anilbhai", carats: 97.88, rate: 2770, finalRoughAmt: 271128, vigat: "AL 65 Rough", date: "2026-06-11T12:00:00Z" },
         { id: "R_LOT101", name: "lot 101", party: "Kiritbhai", carats: 500.00, rate: 2500, finalRoughAmt: 1250000, vigat: "Lot 101 Raw", date: "2026-07-20T10:00:00Z" }
@@ -721,7 +721,7 @@
           tableReAssort: "OK", tableKhata: "OK", tableJama: "જમા", tableVigat: "",
           rWeight: 90.00, rSize: "18.8889", cardSize: 111.11,
           reqWeightPct: 35.00, fourPPct: 20.25, rtPct: 97.47,
-          multPct: 35.00, rToPolishPct: 32.22, varPct: 2.78,
+          multPct: 35.00, rToPolishPct: 32.22, varPct: -2.78,
           weightFormula: "2.50 * 2029", gNangFormula: "3470 * 65",
           polishNang: 3470, polishCarat: 29.00, padtar: 14080,
           s65: 33.0, s4: 34.0, s2: 12.0, s20: 14.0, s00: 2.0, s000: 5.0, s2plus: 79.0, s2minus: 21.0,
@@ -758,7 +758,7 @@
       ];
 
       state.repairs = [];
-      state.prunedMockData_v5 = true;
+      state.prunedMockData_v6 = true;
     }
 
     if (state.roughLots.length === 0) {
@@ -2331,7 +2331,7 @@
 
       const expectedPct = k.r2pPct || 0;
       const achievedPct = (roughWeight > 0 && derivedPolishCarat > 0) ? (derivedPolishCarat / roughWeight * 100) : 0;
-      const variationPct = isCompleted ? (expectedPct - achievedPct) : 0;
+      const variationPct = isCompleted ? (achievedPct - expectedPct) : 0;
       
       const roundedToAmtForPadtar = Math.round(toAmt / 100) * 100;
       const padtar = (isCompleted && derivedPolishCarat > 0) ? Math.round((roundedToAmtForPadtar / derivedPolishCarat) / 10) * 10 : 0;
@@ -2508,8 +2508,8 @@
       const multPctVal = rtCt > 0 ? (polishCarat / rtCt * 100) : 0;
       document.getElementById("pcMultPct").value = multPctVal.toFixed(2);
       
-      // variation % = Expected % - Actual % (linked to Excel U5 / B18)
-      const varPct = reqWeightPct - achievedPct;
+      // variation % = Actual % - Expected % (linked to Excel U5 / B18)
+      const varPct = achievedPct - reqWeightPct;
       document.getElementById("pcVarPct").value = varPct.toFixed(2);
       
       // રફ સાઇઝ (Rough Size) = Rough Pcs / Rough Weight (linked to Excel G5)
