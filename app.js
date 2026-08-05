@@ -163,13 +163,13 @@
     const k = (state.kapans || []).find(x => x.id === kapanId);
     if (!k) return;
     
-    const selectEl = document.getElementById("pcKapanSelect");
+    const selectEl = document.getElementById("pcMergedSelect");
     if (selectEl) {
-      let opt = Array.from(selectEl.options).find(o => o.text.includes(k.kapanNo));
+      let opt = Array.from(selectEl.options).find(o => o.value === k.id);
       if (!opt) {
         const newOpt = document.createElement("option");
         newOpt.value = k.id;
-        newOpt.innerText = `${k.kapanNo} (${k.carat} Cts - Polished)`;
+        newOpt.innerText = `[⚠️ મંજૂરી બાકી] ${k.kapanNo} (${k.carat} Cts)`;
         selectEl.appendChild(newOpt);
         selectEl.value = k.id;
       } else {
@@ -204,13 +204,13 @@
     // Switch to Polish Chart view page
     switchPage('polish_chart');
     
-    const selectEl = document.getElementById("pcKapanSelect");
+    const selectEl = document.getElementById("pcMergedSelect");
     if (selectEl) {
-      let opt = Array.from(selectEl.options).find(o => o.text.includes(k.kapanNo));
+      let opt = Array.from(selectEl.options).find(o => o.value === k.id);
       if (!opt) {
         const newOpt = document.createElement("option");
         newOpt.value = k.id;
-        newOpt.innerText = `${k.kapanNo} (${k.carat} Cts - Polished)`;
+        newOpt.innerText = `[⚠️ મંજૂરી બાકી] ${k.kapanNo} (${k.carat} Cts)`;
         selectEl.appendChild(newOpt);
         selectEl.value = k.id;
       } else {
@@ -2398,79 +2398,83 @@
     }).join("");
   }
 
-  // POLISH DEPARTMENT
-  function renderPolishChartFormKapan() {
-    const sel = document.getElementById("pcKapanSelect");
-    if (!sel) return;
+  // MERGED POLISH DEPARTMENT SEARCH & SELECT
+  function renderMergedPolishChartSelect() {
+    const select = document.getElementById("pcMergedSelect");
+    if (!select) return;
     
-    // Filter kapans that are completed (OK KAPAN) and do not have an approved Polish Chart yet
-    const waitingKapans = (state.kapans || []).filter(k => {
+    const query = (document.getElementById("pcMergedSearchInput") || {}).value || "";
+    
+    const waiting = (state.kapans || []).filter(k => {
       const isOk = k.currentDept === "OK KAPAN (ઓકે કાપણ)";
       const chart = (state.polishCharts || []).find(pc => pc.kapanNo === k.kapanNo && pc.status === "Approved");
       return isOk && !chart;
     });
 
-    sel.innerHTML = `<option value="">— કાપણ પસંદ કરો —</option>` + waitingKapans
-      .map(k => {
-        return `<option value="${k.id}">${k.kapanNo} (${k.carat} Cts)</option>`;
-      }).join("");
-    
-    document.getElementById("pcDate").value = new Date().toISOString().slice(0,10);
-    populatePolishChartSearchSelect();
+    const approved = (state.polishCharts || []).filter(pc => pc.status === "Approved");
+
+    let optionsHtml = `<option value="">— કાપણ પસંદ કરો (મંજૂરી બાકી અથવા મંજૂર થયેલ) —</option>`;
+
+    if (!query) {
+      if (waiting.length > 0) {
+        optionsHtml += `<optgroup label="⚠️ મંજૂરી માટે બાકી કાપણ (Pending Approval)">`;
+        waiting.forEach(k => {
+          optionsHtml += `<option value="${k.id}">[⚠️ મંજૂરી બાકી] ${k.kapanNo} (${k.carat} Cts)</option>`;
+        });
+        optionsHtml += `</optgroup>`;
+      }
+      
+      if (approved.length > 0) {
+        optionsHtml += `<optgroup label="✅ તાજેતરમાં મંજૂર થયેલ ચાર્ટ (Recently Approved)">`;
+        approved.slice(0, 10).forEach(pc => {
+          optionsHtml += `<option value="${pc.id}">[✅ મંજૂર થયેલ] ${pc.kapanNo} (${pc.roughName || ""})</option>`;
+        });
+        optionsHtml += `</optgroup>`;
+      }
+    } else {
+      const q = query.toLowerCase();
+      const filteredWaiting = waiting.filter(k => k.kapanNo.toLowerCase().includes(q));
+      const filteredApproved = approved.filter(pc => pc.kapanNo.toLowerCase().includes(q) || (pc.roughName && pc.roughName.toLowerCase().includes(q)));
+
+      if (filteredWaiting.length > 0) {
+        optionsHtml += `<optgroup label="⚠️ મંજૂરી માટે બાકી કાપણ (Pending Approval)">`;
+        filteredWaiting.forEach(k => {
+          optionsHtml += `<option value="${k.id}">[⚠️ મંજૂરી બાકી] ${k.kapanNo} (${k.carat} Cts)</option>`;
+        });
+        optionsHtml += `</optgroup>`;
+      }
+
+      if (filteredApproved.length > 0) {
+        optionsHtml += `<optgroup label="✅ મંજૂર થયેલ ચાર્ટ (Approved)">`;
+        filteredApproved.forEach(pc => {
+          optionsHtml += `<option value="${pc.id}">[✅ મંજૂર થયેલ] ${pc.kapanNo} (${pc.roughName || ""})</option>`;
+        });
+        optionsHtml += `</optgroup>`;
+      }
+    }
+
+    select.innerHTML = optionsHtml;
+  }
+
+  function filterMergedSearchSelect() {
+    renderMergedPolishChartSelect();
+  }
+
+  // Alias functions to avoid breaking any other references
+  function renderPolishChartFormKapan() {
+    renderMergedPolishChartSelect();
   }
 
   function populatePolishChartSearchSelect() {
-    const select = document.getElementById("pcSearchSelect");
-    if (!select) return;
-    
-    const query = (document.getElementById("pcSearchInput") || {}).value || "";
-    
-    const approvedCharts = state.polishCharts.filter(pc => pc.status === "Approved");
-    const filtered = approvedCharts.filter(pc => pc.kapanNo.toLowerCase().includes(query.toLowerCase()));
-    
-    select.innerHTML = `<option value="">— કાપણ ચાર્ટ પસંદ કરો —</option>` + filtered.map(pc => `
-      <option value="${pc.id}">${pc.kapanNo} (${pc.roughName || ""})</option>
-    `).join("");
+    // Deprecated but kept to prevent any undefined function calls
   }
 
   function filterSearchSelect() {
-    populatePolishChartSearchSelect();
-    viewSelectedPolishChart();
+    loadPolishChartForm();
   }
 
   function viewSelectedPolishChart() {
-    const select = document.getElementById("pcSearchSelect");
-    const previewEl = document.getElementById("polishChartPreviewBox");
-    const placeholderEl = document.getElementById("pcPlaceholderMsg");
-    const displayEl = document.getElementById("selectedChartDisplayArea");
-    
-    if (!select || !select.value) {
-      if (previewEl) previewEl.style.display = "none";
-      if (placeholderEl) placeholderEl.style.display = "block";
-      return;
-    }
-    
-    const chart = (state.polishCharts || []).find(pc => pc.id === select.value || pc.kapanNo === select.value);
-    if (!chart) {
-      if (previewEl) previewEl.style.display = "none";
-      if (placeholderEl) placeholderEl.style.display = "block";
-      return;
-    }
-    
-    if (placeholderEl) placeholderEl.style.display = "none";
-    if (previewEl) previewEl.style.display = "block";
-    
-    if (displayEl) {
-      displayEl.innerHTML = generatePolishChartHtml(chart, "selectedView");
-    }
-    
-    // Setup download button click handler
-    const btnDownload = document.getElementById("btnDownloadImage");
-    if (btnDownload) {
-      btnDownload.onclick = function() {
-        exportChartAsImage(`selectedView_${chart.id}`, chart.kapanNo);
-      };
-    }
+    loadPolishChartForm();
   }
 
   function calculateChartCosting() {
@@ -2494,7 +2498,7 @@
     const reqWeightPct = parseFloat(document.getElementById("pcReqWeightPct").value) || 0;
     
     // Find selected Kapan to get its RT Weight and Rough Pcs
-    const pcKapanSelectEl = document.getElementById("pcKapanSelect");
+    const pcKapanSelectEl = document.getElementById("pcMergedSelect");
     const activeKapanId = pcKapanSelectEl ? pcKapanSelectEl.value : "";
     const k = (state.kapans || []).find(x => x.id === activeKapanId);
     const rtCt = k ? (k.rtCt || 0) : 0;
@@ -2528,12 +2532,41 @@
   }
 
   function loadPolishChartForm() {
-    const id = document.getElementById("pcKapanSelect").value;
-    const k = (state.kapans || []).find(x => x.id === id);
+    const id = (document.getElementById("pcMergedSelect") || {}).value || "";
     const formEl = document.getElementById("polishChartFormCard");
     const previewEl = document.getElementById("polishChartPreviewBox");
-    const placeholderEl = document.getElementById("pcPlaceholderMsg");
+    const placeholderEl = document.getElementById("pcMergedPlaceholderMsg");
+    const displayEl = document.getElementById("selectedChartDisplayArea");
     
+    if (!id) {
+      if (formEl) formEl.style.display = "none";
+      if (previewEl) previewEl.style.display = "none";
+      if (placeholderEl) placeholderEl.style.display = "block";
+      return;
+    }
+    
+    if (id.startsWith("PC")) {
+      // Approved Polish Chart
+      if (formEl) formEl.style.display = "none";
+      if (placeholderEl) placeholderEl.style.display = "none";
+      if (previewEl) previewEl.style.display = "block";
+      
+      const chart = (state.polishCharts || []).find(pc => pc.id === id);
+      if (chart && displayEl) {
+        displayEl.innerHTML = generatePolishChartHtml(chart, "selectedView");
+        // Setup download button click handler
+        const btnDownload = document.getElementById("btnDownloadImage");
+        if (btnDownload) {
+          btnDownload.onclick = function() {
+            exportChartAsImage(`selectedView_${chart.id}`, chart.kapanNo);
+          };
+        }
+      }
+      return;
+    }
+    
+    // Otherwise it is a Kapan ID (starts with K)
+    const k = (state.kapans || []).find(x => x.id === id);
     if (!k) {
       if (formEl) formEl.style.display = "none";
       if (previewEl) previewEl.style.display = "none";
@@ -2541,6 +2574,8 @@
       return;
     }
     
+    if (placeholderEl) placeholderEl.style.display = "none";
+    if (previewEl) previewEl.style.display = "none";
     if (formEl) formEl.style.display = "block";
     
     let chart = (state.polishCharts || []).find(pc => pc.kapanNo === k.kapanNo);
@@ -2996,6 +3031,20 @@
     const completedList = activeList.filter(k => k.currentDept === "OK KAPAN (ઓકે કાપણ)");
     const processingList = activeList.filter(k => k.currentDept !== "OK KAPAN (ઓકે કાપણ)");
 
+    processingList.sort((a, b) => {
+      const aUrgent = (a.tag || "").toLowerCase() === "urgent" ? 1 : 0;
+      const bUrgent = (b.tag || "").toLowerCase() === "urgent" ? 1 : 0;
+      if (aUrgent !== bUrgent) return bUrgent - aUrgent;
+      
+      const aSample = (a.tag || "").toLowerCase() === "sample" ? 1 : 0;
+      const bSample = (b.tag || "").toLowerCase() === "sample" ? 1 : 0;
+      if (aSample !== bSample) return bSample - aSample;
+      
+      const dateA = new Date(a.createdDate || a.lastMovedDate || 0);
+      const dateB = new Date(b.createdDate || b.lastMovedDate || 0);
+      return dateA - dateB;
+    });
+
     let html = "";
 
     // 1. COMPLETED SECTION AT THE TOP
@@ -3126,12 +3175,22 @@
             <tbody>
       `;
       processingList.forEach(k => {
-        html += `<tr><td style="font-weight: bold; border: 1px solid #e2e8f0; padding: 10px;">${k.kapanNo}</td>`;
-        processingDepts.forEach(d => {
+        const tag = (k.tag || "").toLowerCase();
+        let tagClass = "tag-regular";
+        if (tag === "urgent") tagClass = "tag-urgent";
+        else if (tag === "sample") tagClass = "tag-sample";
+        
+        const kapanBadge = `<span class="tag-badge ${tagClass}" style="font-size:12.5px; padding:4px 10px; display:inline-block; border-radius:4px; text-align:center; min-width:85px; font-weight:bold; box-sizing: border-box;">${k.kapanNo}</span>`;
+        
+        html += `<tr><td style="font-weight: bold; border: 1px solid #e2e8f0; padding: 10px; text-align: center; vertical-align: middle;">${kapanBadge}</td>`;
+        
+        const currentDeptIdx = processingDepts.indexOf(k.currentDept);
+        
+        processingDepts.forEach((d, dIdx) => {
           if (k.currentDept === d) {
             const statusLabel = k.status === "In-Repair" 
               ? `<span class="status-repair" style="display:inline-block; font-size:10px; padding:1px 4px; margin-top:2px;">🔧 રીપેરિંગ</span>` 
-              : ``; // Removed "Chalu" status label
+              : ``;
             
             html += `
               <td style="background: #eff6ff; border: 1.5px solid var(--accent); padding: 8px; vertical-align: middle; text-align: center;">
@@ -3145,8 +3204,31 @@
                 </div>
               </td>
             `;
+          } else if (dIdx < currentDeptIdx) {
+            const transfersForKapan = (state.transfers || []).filter(t => t.kapanNo === k.kapanNo);
+            const transferFromD = transfersForKapan.find(t => t.fromDept === d);
+            const transferToD = transfersForKapan.find(t => t.toDept === d);
+            const entryTime = transferToD ? new Date(transferToD.timestamp) : (d === "Galaxy" ? new Date(k.createdDate) : null);
+            const exitTime = transferFromD ? new Date(transferFromD.timestamp) : null;
+            
+            let daysHtml = "";
+            if (entryTime && exitTime) {
+              const diffDays = Math.max(0.1, parseFloat(((exitTime - entryTime) / (1000 * 60 * 60 * 24)).toFixed(1)));
+              daysHtml = `<div style="font-size: 10.5px; color: #64748b; margin-top: 4px; font-weight: 600;">${diffDays}</div>`;
+            }
+            
+            const outNang = transferFromD ? transferFromD.nang : "-";
+            const outCarat = transferFromD ? Number(transferFromD.carat).toFixed(2) : "-";
+            
+            html += `
+              <td style="opacity: 0.55; filter: contrast(85%); border: 1px solid #e2e8f0; padding: 8px; text-align: center; vertical-align: middle;">
+                <div style="font-weight:700; color:#475569; font-size:12px;">${outNang} Pis</div>
+                <div style="font-weight:600; color:#64748b; font-size:10.5px;">${outCarat} Cts</div>
+                ${daysHtml}
+              </td>
+            `;
           } else {
-            html += `<td style="color:#cbd5e1; font-weight:normal; border: 1px solid #e2e8f0; padding: 10px;">-</td>`;
+            html += `<td style="color:#cbd5e1; font-weight:normal; border: 1px solid #e2e8f0; padding: 10px; text-align: center; vertical-align: middle;">-</td>`;
           }
         });
         html += `</tr>`;
@@ -3505,6 +3587,23 @@
 
   let editingDeptName = null;
 
+  function addCustomFieldInputRow(name = "", compulsory = false) {
+    const container = document.getElementById("adCustomFieldsListContainer");
+    if (!container) return;
+
+    const rowId = "cfr_" + Date.now() + "_" + Math.floor(Math.random()*1000);
+    const rowHtml = `
+      <div id="${rowId}" style="display:flex; align-items:center; gap:8px; background:#fff; padding:6px; border:1px solid #cbd5e1; border-radius:4px;">
+        <input type="text" class="custom-field-name-input" placeholder="Field Label (e.g. Hole Size)" value="${name}" style="flex:2; font-size:12.5px; padding:4px 8px; border:1px solid #cbd5e1; border-radius:4px; margin:0;" required>
+        <label style="flex:1; display:inline-flex; align-items:center; gap:4px; font-size:11px; margin:0; cursor:pointer; user-select:none; font-weight:700;">
+          <input type="checkbox" class="custom-field-comp-input" ${compulsory ? 'checked' : ''} style="width:auto; margin:0; cursor:pointer;"> Required
+        </label>
+        <button type="button" class="btn btn-danger" onclick="document.getElementById('${rowId}').remove()" style="padding:2px 6px; font-size:11.5px; height:24px; display:inline-flex; align-items:center; font-weight:700; margin:0;">🗑️</button>
+      </div>
+    `;
+    container.insertAdjacentHTML("beforeend", rowHtml);
+  }
+
   function openAddDeptModal(editDeptName = null) {
     editingDeptName = editDeptName;
     document.getElementById("adDeptName").value = "";
@@ -3519,6 +3618,10 @@
     document.getElementById("adVajanComp").checked = true;
     document.getElementById("adLotShow").checked = false;
     document.getElementById("adLotComp").checked = false;
+
+    // Reset custom fields container
+    const cList = document.getElementById("adCustomFieldsListContainer");
+    if (cList) cList.innerHTML = "";
 
     let receivesHtml = "";
     let sendsHtml = "";
@@ -3545,19 +3648,26 @@
       document.getElementById("adDeptName").disabled = false;
       document.getElementById("addDeptModalTitle").innerText = `✏️ વિભાગ સુધારો (Edit Department: ${editDeptName})`;
       
-      const config = state.deptConfigs[editDeptName] || { receivesFrom: [], sendsTo: [], customHeader: "", isCompulsory: false, ratePerPiece: 5 };
+      const config = (state.deptConfigs && state.deptConfigs[editDeptName]) || { receivesFrom: [], sendsTo: [], customHeader: "", isCompulsory: false, ratePerPiece: 5 };
       document.getElementById("adDeptCustomHeader").value = config.customHeader || "";
       document.getElementById("adDeptIsCompulsory").checked = config.isCompulsory !== false;
       document.getElementById("adDeptRate").value = config.ratePerPiece || 5;
 
-      // Populate standard field configurations
-      const fields = config.fieldsConfig || { nung: { show: true, compulsory: true }, vajan: { show: true, compulsory: true }, lot: { show: false, compulsory: false } };
-      document.getElementById("adNungShow").checked = fields.nung?.show !== false;
-      document.getElementById("adNungComp").checked = !!fields.nung?.compulsory;
-      document.getElementById("adVajanShow").checked = fields.vajan?.show !== false;
-      document.getElementById("adVajanComp").checked = !!fields.vajan?.compulsory;
-      document.getElementById("adLotShow").checked = !!fields.lot?.show;
-      document.getElementById("adLotComp").checked = !!fields.lot?.compulsory;
+      // Populate standard field configurations safely
+      const fields = config.fieldsConfig || {};
+      document.getElementById("adNungShow").checked = fields.nung ? fields.nung.show !== false : true;
+      document.getElementById("adNungComp").checked = fields.nung ? !!fields.nung.compulsory : true;
+      document.getElementById("adVajanShow").checked = fields.vajan ? fields.vajan.show !== false : true;
+      document.getElementById("adVajanComp").checked = fields.vajan ? !!fields.vajan.compulsory : true;
+      document.getElementById("adLotShow").checked = fields.lot ? !!fields.lot.show : false;
+      document.getElementById("adLotComp").checked = fields.lot ? !!fields.lot.compulsory : false;
+
+      // Populate custom fields list safely
+      if (config.customFields && config.customFields.length > 0) {
+        config.customFields.forEach(f => addCustomFieldInputRow(f.name, f.compulsory));
+      } else if (config.customHeader) {
+        addCustomFieldInputRow(config.customHeader, config.isCompulsory !== false);
+      }
 
       const recChecks = document.querySelectorAll('input[name="adDeptReceives"]');
       recChecks.forEach(cb => {
@@ -3584,8 +3694,6 @@
   function submitAddDepartment(e) {
     e.preventDefault();
     const name = document.getElementById("adDeptName").value.trim();
-    const customHeader = document.getElementById("adDeptCustomHeader").value.trim();
-    const isCompulsory = document.getElementById("adDeptIsCompulsory").checked;
     const ratePerPiece = parseFloat(document.getElementById("adDeptRate").value) || 0;
 
     if (!name) {
@@ -3614,6 +3722,22 @@
       }
     };
 
+    // Extract dynamic custom fields
+    const customFieldRows = document.querySelectorAll("#adCustomFieldsListContainer > div");
+    const customFields = Array.from(customFieldRows).map(row => {
+      const nameInput = row.querySelector(".custom-field-name-input");
+      const compInput = row.querySelector(".custom-field-comp-input");
+      return {
+        name: nameInput ? nameInput.value.trim() : "",
+        compulsory: compInput ? compInput.checked : false
+      };
+    }).filter(f => f.name !== "");
+
+    // Keep customHeader and isCompulsory for backward compatibility
+    const firstField = customFields[0];
+    const customHeader = firstField ? firstField.name : "";
+    const isCompulsory = firstField ? firstField.compulsory : false;
+
     if (editingDeptName) {
       if (name !== editingDeptName) {
         if (DEPTS.includes(name)) {
@@ -3622,7 +3746,7 @@
         }
         renameDepartmentMaster(DEPTS.indexOf(editingDeptName), name);
       }
-      state.deptConfigs[name] = { receivesFrom, sendsTo, customHeader, isCompulsory, ratePerPiece, fieldsConfig };
+      state.deptConfigs[name] = { receivesFrom, sendsTo, customHeader, isCompulsory, ratePerPiece, fieldsConfig, customFields };
       showToast(`વિભાગ '${name}' ના સેટિંગ્સ અપડેટ થયા!`);
     } else {
       if (DEPTS.includes(name)) {
@@ -3630,7 +3754,7 @@
         return;
       }
       DEPTS.push(name);
-      state.deptConfigs[name] = { receivesFrom, sendsTo, customHeader, isCompulsory, ratePerPiece, fieldsConfig };
+      state.deptConfigs[name] = { receivesFrom, sendsTo, customHeader, isCompulsory, ratePerPiece, fieldsConfig, customFields };
       showToast(`નવો વિભાગ '${name}' ઉમેરાયો!`);
     }
 
@@ -3671,7 +3795,11 @@
       if (fields.vajan?.show) rulesDesc.push(`વજન (Carats): ${fields.vajan.compulsory ? 'Compulsory' : 'Optional'}`);
       if (fields.lot?.show) rulesDesc.push(`લોટ (Lot No): ${fields.lot.compulsory ? 'Compulsory' : 'Optional'}`);
       
-      if (config.customHeader) {
+      if (config.customFields && config.customFields.length > 0) {
+        config.customFields.forEach(f => {
+          rulesDesc.push(`${f.name}: ${f.compulsory ? 'Compulsory' : 'Optional'}`);
+        });
+      } else if (config.customHeader) {
         rulesDesc.push(`${config.customHeader}: ${config.isCompulsory ? 'Compulsory' : 'Optional'}`);
       }
       const rulesHtml = rulesDesc.map(r => `<li>${r}</li>`).join("");
@@ -5066,6 +5194,40 @@
         <td>-</td>
       </tr>
     `;
+
+    // Render KPI dashboard cards
+    const kpiContainer = document.getElementById("reportsKpiContainer");
+    if (kpiContainer) {
+      const totalActive = finalKapans.filter(item => item.k.currentDept !== "OK KAPAN (ઓકે કાપણ)").length;
+      const totalApproved = finalKapans.filter(item => item.k.currentDept === "OK KAPAN (ઓકે કાપણ)").length;
+      const avgDaysVal = count > 0 ? (sumTotalDays / count).toFixed(1) : "-";
+      const avgYieldVal = countYield > 0 ? (sumYield / countYield).toFixed(2) + "%" : "-";
+      const avgVarVal = countYield > 0 ? (sumVar / countYield).toFixed(2) + "%" : "-";
+      const totalOverdue = finalKapans.filter(item => item.isOverdue).length;
+
+      kpiContainer.innerHTML = `
+        <div style="background: linear-gradient(135deg, #eff6ff, #dbeafe); border: 1px solid #bfdbfe; padding: 16px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); text-align: center;">
+          <div style="font-size: 24px; font-weight: 800; color: #1e3a8a; margin-bottom: 4px;">${count}</div>
+          <div style="font-size: 12px; font-weight: 700; color: #1e40af;">કુલ કાપણ (Total Kapans)</div>
+          <div style="font-size: 10px; color: #475569; margin-top: 4px;">ચાલુ: ${totalActive} | ઓકે: ${totalApproved}</div>
+        </div>
+        <div style="background: linear-gradient(135deg, #fef9c3, #fef08a); border: 1px solid #fde047; padding: 16px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); text-align: center;">
+          <div style="font-size: 24px; font-weight: 800; color: #854d0e; margin-bottom: 4px;">${avgDaysVal}</div>
+          <div style="font-size: 12px; font-weight: 700; color: #854d0e;">સરેરાશ કુલ દિવસો (Avg Days)</div>
+          <div style="font-size: 10px; color: #713f12; margin-top: 4px;">વિભાગીય સમયગાળો</div>
+        </div>
+        <div style="background: linear-gradient(135deg, #f3e8ff, #e9d5ff); border: 1px solid #d8b4fe; padding: 16px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); text-align: center;">
+          <div style="font-size: 24px; font-weight: 800; color: #581c87; margin-bottom: 4px;">${avgVarVal}</div>
+          <div style="font-size: 12px; font-weight: 700; color: #6b21a8;">સરેરાશ વેરિયેશન (Avg Var)</div>
+          <div style="font-size: 10px; color: #581c87; margin-top: 4px;">તૈયાર ગુણાકાર વિલંબ</div>
+        </div>
+        <div style="background: linear-gradient(135deg, #fee2e2, #fca5a5); border: 1px solid #f87171; padding: 16px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); text-align: center;">
+          <div style="font-size: 24px; font-weight: 800; color: #991b1b; margin-bottom: 4px;">${totalOverdue}</div>
+          <div style="font-size: 12px; font-weight: 700; color: #b91c1c;">વિલંબિત કાપણ (Overdue Alert)</div>
+          <div style="font-size: 10px; color: #7f1d1d; margin-top: 4px;">વિલંબ > ૩ દિવસ</div>
+        </div>
+      `;
+    }
   }
 
   function exportReport() {
@@ -5132,3 +5294,4 @@
   window.runReport = runReport;
   window.exportReport = exportReport;
   window.printReport = printReport;
+  window.addCustomFieldInputRow = addCustomFieldInputRow;
