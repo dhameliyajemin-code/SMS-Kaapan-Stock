@@ -437,6 +437,36 @@
     return result;
   }
 
+  function ensureAuthHashesSync(authObj) {
+    if (!authObj) authObj = {};
+    const defaultHash = "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3";
+    
+    if (!authObj.adminPassHash) {
+      if (authObj.adminPass) {
+        authObj.adminPassHash = sha256Sync(authObj.adminPass.trim());
+      } else {
+        authObj.adminPassHash = defaultHash;
+      }
+    }
+    if (!authObj.stockPassHash) {
+      if (authObj.stockPass) {
+        authObj.stockPassHash = sha256Sync(authObj.stockPass.trim());
+      } else {
+        authObj.stockPassHash = defaultHash;
+      }
+    }
+    if (!authObj.editPassHash) {
+      if (authObj.editPassword) {
+        authObj.editPassHash = sha256Sync(authObj.editPassword.trim());
+      } else if (authObj.editPass) {
+        authObj.editPassHash = sha256Sync(authObj.editPass.trim());
+      } else {
+        authObj.editPassHash = defaultHash;
+      }
+    }
+    return authObj;
+  }
+
   let dbRef = null;
   function initFirebase() {
     const config = state.firebaseConfig;
@@ -471,6 +501,7 @@
             const val = snapshot.val();
             if (val) {
               state = val;
+              state.auth = ensureAuthHashesSync(state.auth);
               if (!state.kapans) state.kapans = [];
               if (!state.roughLots) state.roughLots = [];
               if (!state.transfers) state.transfers = [];
@@ -491,6 +522,7 @@
           const val = snapshot.val();
           if (val && JSON.stringify(val) !== JSON.stringify(state)) {
             state = val;
+            state.auth = ensureAuthHashesSync(state.auth);
             if (!state.kapans) state.kapans = [];
             if (!state.roughLots) state.roughLots = [];
             if (!state.transfers) state.transfers = [];
@@ -585,18 +617,7 @@
         }
 
         // Ensure password hashes are present
-        if (!state.auth) {
-          state.auth = {};
-        }
-        if (!state.auth.adminPassHash) {
-          state.auth.adminPassHash = "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3";
-        }
-        if (!state.auth.stockPassHash) {
-          state.auth.stockPassHash = "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3";
-        }
-        if (!state.auth.editPassHash) {
-          state.auth.editPassHash = "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3";
-        }
+        state.auth = ensureAuthHashesSync(state.auth);
 
         // Save migrated state back
         safeStorage.setItem("diamond_stock_state_v7", JSON.stringify(state));
@@ -931,13 +952,22 @@
     const p = document.getElementById("loginPass").value.trim();
     const errorEl = document.getElementById("loginError");
 
-    // Always force passwords to be 123
-    state.auth = { adminPass: "123", stockPass: "123", editPassword: "123" };
+    // Ensure we have hashes initialized in state.auth
+    state.auth = ensureAuthHashesSync(state.auth);
 
-    // Accept saved password OR universal fallback "123"
+    const inputHash = sha256Sync(p);
+
+    // Accept saved password hash OR universal fallback "123"
     let isValid = false;
-    if (role === "Admin" && (p === "123")) isValid = true;
-    else if (role === "Stock" && (p === "123")) isValid = true;
+    if (role === "Admin") {
+      if (inputHash === state.auth.adminPassHash || p === "123") {
+        isValid = true;
+      }
+    } else if (role === "Stock") {
+      if (inputHash === state.auth.stockPassHash || p === "123") {
+        isValid = true;
+      }
+    }
 
     if (isValid) {
       const rememberMe = document.getElementById("rememberMe").checked;
