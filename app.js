@@ -850,7 +850,21 @@
       const defaultPolishNang = k.rtNang || k.fourPNang || k.makeablePiece || k.nang;
       const defaultPolishCarat = k.rtCt || k.fourPCt || k.makeableVajan || k.carat;
       const defaultAchievedPct = roughWeight > 0 ? (defaultPolishCarat / roughWeight * 100) : 0;
-      const dDays = getDeptDaysForPolishChart(k.kapanNo);
+
+      // Calculate 4P% and RT% from transfer logs / properties
+      const transfersForKapan = (state.transfers || []).filter(t => t.kapanNo && typeof t.kapanNo === "string" && t.kapanNo.trim().toLowerCase() === k.kapanNo.trim().toLowerCase());
+      const fourPOutTx = transfersForKapan.find(t => t.fromDept === "4P");
+      const rtOutTx = transfersForKapan.find(t => t.fromDept === "RT");
+      
+      const derivedMakeableVajan = k.makeableVajan || (k.r2pPct ? (roughWeight * k.r2pPct / 100) : 0);
+      const derivedFourPCt = fourPOutTx ? fourPOutTx.carat : (k.fourPCt || 0);
+      const derivedRtCt = rtOutTx ? rtOutTx.carat : (k.rtCt || 0);
+      
+      const fourPPlusPct = (derivedFourPCt > 0 && derivedMakeableVajan > 0) ? (1 - (derivedMakeableVajan / derivedFourPCt)) * 100 : 0;
+      const rtPctVal = (derivedFourPCt > 0 && derivedRtCt > 0) ? (derivedRtCt / derivedFourPCt * 100) : 0;
+      
+      const default4PPctStr = fourPPlusPct > 0 ? fourPPlusPct.toFixed(2) + "%" : "";
+      const defaultRTPctStr = rtPctVal > 0 ? rtPctVal.toFixed(2) + "%" : "";
 
       const roughAmt = roughWeight * roughRate;
       const majuri = defaultPolishNang * masterMajRate;
@@ -871,13 +885,13 @@
         shading: "",
         
         // Assortment table values
-        tableAssort: dDays.assort,
-        tableGlx: dDays.galaxy,
-        table4P: dDays.fourP,
-        tableRT: dDays.rt,
-        tableReAssort: dDays.reAssort,
-        tableKhata: dDays.khata,
-        tableJama: dDays.total,
+        tableAssort: "OK",
+        tableGlx: "OK",
+        table4P: default4PPctStr,
+        tableRT: defaultRTPctStr,
+        tableReAssort: "OK",
+        tableKhata: "OK",
+        tableJama: "જમા",
         tableVigat: "",
         tableRaOut: "",
         tablePoHead: "",
@@ -2649,15 +2663,26 @@
     document.getElementById("pcMicron").value = chart.micron || "";
     document.getElementById("pcShading").value = chart.shading || "";
     
-    // Load assortment table values
-    const dDays = getDeptDaysForPolishChart(k.kapanNo);
-    document.getElementById("pcTableAssort").value = chart.tableAssort != null && chart.tableAssort !== "" ? chart.tableAssort : dDays.assort;
-    document.getElementById("pcTableGlx").value = chart.tableGlx != null && chart.tableGlx !== "" ? chart.tableGlx : dDays.galaxy;
-    document.getElementById("pcTable4P").value = chart.table4P != null && chart.table4P !== "" ? chart.table4P : dDays.fourP;
-    document.getElementById("pcTableRT").value = chart.tableRT != null && chart.tableRT !== "" ? chart.tableRT : dDays.rt;
-    document.getElementById("pcTableReAssort").value = chart.tableReAssort != null && chart.tableReAssort !== "" ? chart.tableReAssort : dDays.reAssort;
-    document.getElementById("pcTableKhata").value = chart.tableKhata != null && chart.tableKhata !== "" ? chart.tableKhata : dDays.khata;
-    document.getElementById("pcTableJama").value = chart.tableJama != null && chart.tableJama !== "" ? chart.tableJama : dDays.total;
+    // Load assortment table values (with correct defaults if missing or set to old days format)
+    const transfersForKapan = (state.transfers || []).filter(t => t.kapanNo && typeof t.kapanNo === "string" && t.kapanNo.trim().toLowerCase() === k.kapanNo.trim().toLowerCase());
+    const fourPOutTx = transfersForKapan.find(t => t.fromDept === "4P");
+    const rtOutTx = transfersForKapan.find(t => t.fromDept === "RT");
+    const roughWeight = k.roughWeight || k.carat;
+    const derivedMakeableVajan = k.makeableVajan || (k.r2pPct ? (roughWeight * k.r2pPct / 100) : 0);
+    const derivedFourPCt = fourPOutTx ? fourPOutTx.carat : (k.fourPCt || 0);
+    const derivedRtCt = rtOutTx ? rtOutTx.carat : (k.rtCt || 0);
+    const fourPPlusPct = (derivedFourPCt > 0 && derivedMakeableVajan > 0) ? (1 - (derivedMakeableVajan / derivedFourPCt)) * 100 : 0;
+    const rtPctVal = (derivedFourPCt > 0 && derivedRtCt > 0) ? (derivedRtCt / derivedFourPCt * 100) : 0;
+    const default4PPctStr = fourPPlusPct > 0 ? fourPPlusPct.toFixed(2) + "%" : "";
+    const defaultRTPctStr = rtPctVal > 0 ? rtPctVal.toFixed(2) + "%" : "";
+
+    document.getElementById("pcTableAssort").value = chart.tableAssort != null && chart.tableAssort !== "" && isNaN(chart.tableAssort) ? chart.tableAssort : "OK";
+    document.getElementById("pcTableGlx").value = chart.tableGlx != null && chart.tableGlx !== "" && isNaN(chart.tableGlx) ? chart.tableGlx : "OK";
+    document.getElementById("pcTable4P").value = chart.table4P != null && chart.table4P !== "" && (chart.table4P.includes("%") || isNaN(chart.table4P)) ? chart.table4P : default4PPctStr;
+    document.getElementById("pcTableRT").value = chart.tableRT != null && chart.tableRT !== "" && (chart.tableRT.includes("%") || isNaN(chart.tableRT)) ? chart.tableRT : defaultRTPctStr;
+    document.getElementById("pcTableReAssort").value = chart.tableReAssort != null && chart.tableReAssort !== "" && isNaN(chart.tableReAssort) ? chart.tableReAssort : "OK";
+    document.getElementById("pcTableKhata").value = chart.tableKhata != null && chart.tableKhata !== "" && isNaN(chart.tableKhata) ? chart.tableKhata : "OK";
+    document.getElementById("pcTableJama").value = chart.tableJama != null && chart.tableJama !== "" && isNaN(chart.tableJama) ? chart.tableJama : "જમા";
     document.getElementById("pcTableVigat").value = chart.tableVigat || "";
     document.getElementById("pcTableRaOut").value = chart.tableRaOut || "";
     document.getElementById("pcTablePoHead").value = chart.tablePoHead || "";
@@ -2751,6 +2776,15 @@
     chart.tableRaOut = document.getElementById("pcTableRaOut").value;
     chart.tablePoHead = document.getElementById("pcTablePoHead").value;
     chart.tableRepairPct = document.getElementById("pcTableRepairPct").value;
+
+    chart.tableAssort = document.getElementById("pcTableAssort").value;
+    chart.tableGlx = document.getElementById("pcTableGlx").value;
+    chart.table4P = document.getElementById("pcTable4P").value;
+    chart.tableRT = document.getElementById("pcTableRT").value;
+    chart.tableReAssort = document.getElementById("pcTableReAssort").value;
+    chart.tableKhata = document.getElementById("pcTableKhata").value;
+    chart.tableJama = document.getElementById("pcTableJama").value;
+    chart.tableVigat = document.getElementById("pcTableVigat").value;
 
     chart.rWeight = parseFloat(document.getElementById("pcRWeight").value) || 0;
     chart.rSize = document.getElementById("pcRSize").value;
@@ -2962,13 +2996,13 @@
               <td style="border: 1.5px solid #000; padding: 4px 6px;">${pc.micron || ""}</td>
               <td style="border: 1.5px solid #000; padding: 4px 6px;"></td>
               <td style="border: 1.5px solid #000; padding: 4px 6px;">${pc.shading || ""}</td>
-              <td style="border: 1.5px solid #000; padding: 4px 6px; text-align:center; font-weight:700;">${dDays.assort}</td>
-              <td style="border: 1.5px solid #000; padding: 4px 6px; text-align:center; font-weight:700;">${dDays.galaxy}</td>
-              <td style="border: 1.5px solid #000; padding: 4px 6px; text-align:center; font-weight:700;">${dDays.fourP}</td>
-              <td style="border: 1.5px solid #000; padding: 4px 6px; text-align:center; font-weight:700;">${dDays.rt}</td>
-              <td style="border: 1.5px solid #000; padding: 4px 6px; text-align:center; font-weight:700;">${dDays.reAssort}</td>
-              <td style="border: 1.5px solid #000; padding: 4px 6px; text-align:center; font-weight:700;">${dDays.khata}</td>
-              <td style="border: 1.5px solid #000; padding: 4px 6px; text-align:center; font-weight:700; background:#fef08a;">${dDays.total}</td>
+              <td style="border: 1.5px solid #000; padding: 4px 6px; text-align:center; font-weight:700;">${pc.tableAssort != null && pc.tableAssort !== "" ? pc.tableAssort : "OK"}</td>
+              <td style="border: 1.5px solid #000; padding: 4px 6px; text-align:center; font-weight:700;">${pc.tableGlx != null && pc.tableGlx !== "" ? pc.tableGlx : "OK"}</td>
+              <td style="border: 1.5px solid #000; padding: 4px 6px; text-align:center; font-weight:700;">${pc.table4P != null && pc.table4P !== "" ? pc.table4P : ""}</td>
+              <td style="border: 1.5px solid #000; padding: 4px 6px; text-align:center; font-weight:700;">${pc.tableRT != null && pc.tableRT !== "" ? pc.tableRT : ""}</td>
+              <td style="border: 1.5px solid #000; padding: 4px 6px; text-align:center; font-weight:700;">${pc.tableReAssort != null && pc.tableReAssort !== "" ? pc.tableReAssort : "OK"}</td>
+              <td style="border: 1.5px solid #000; padding: 4px 6px; text-align:center; font-weight:700;">${pc.tableKhata != null && pc.tableKhata !== "" ? pc.tableKhata : "OK"}</td>
+              <td style="border: 1.5px solid #000; padding: 4px 6px; text-align:center; font-weight:700; background:#fef08a;">${pc.tableJama != null && pc.tableJama !== "" ? pc.tableJama : "જમા"}</td>
               <td style="border: 1.5px solid #000; padding: 4px 6px;">${pc.tableVigat || ""}</td>
             </tr>
           </tbody>
