@@ -1957,8 +1957,14 @@
           <td>⏱️ ${duration} ${overdueClass ? '<br><b style="color:var(--danger); font-size:11px;">⚠️ 3+ દિવસ વિલંબ</b>' : ''}</td>
           <td>${vigatHtml}</td>
           <td>
-            <button class="btn btn-outline" style="padding:3px 8px; font-size:11px;" onclick="openEditModal('${k.id}')">✏️</button>
-            <button class="btn btn-danger" style="padding:3px 8px; font-size:11px;" onclick="deleteKapanPrompt('${k.id}')">🗑️</button>
+            <div style="display: flex; gap: 4px; justify-content: center; align-items: center;">
+              <button class="btn btn-outline" style="padding:3px 8px; font-size:11px;" onclick="openEditModal('${k.id}')" title="એડિટ">✏️</button>
+              ${(() => {
+                const chart = (state.polishCharts || []).find(pc => pc && pc.kapanNo === k.kapanNo);
+                return chart ? `<button class="btn btn-success" style="padding:3px 8px; font-size:11px;" onclick="viewChartDetailsPopup('${k.kapanNo}')" title="ચાર્ટ જુઓ">📄</button>` : "";
+              })()}
+              <button class="btn btn-danger" style="padding:3px 8px; font-size:11px;" onclick="deleteKapanPrompt('${k.id}')" title="ડીલીટ">🗑️</button>
+            </div>
           </td>
         </tr>
       `;
@@ -2493,6 +2499,7 @@
     });
 
     const approved = (state.polishCharts || []).filter(pc => pc.status === "Approved");
+    approved.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
 
     let optionsHtml = `<option value="">— કાપણ પસંદ કરો (મંજૂરી બાકી અથવા મંજૂર થયેલ) —</option>`;
 
@@ -2506,8 +2513,8 @@
       }
       
       if (approved.length > 0) {
-        optionsHtml += `<optgroup label="✅ તાજેતરમાં મંજૂર થયેલ ચાર્ટ (Recently Approved)">`;
-        approved.slice(0, 10).forEach(pc => {
+        optionsHtml += `<optgroup label="✅ મંજૂર થયેલ ચાર્ટ (Approved)">`;
+        approved.forEach(pc => {
           optionsHtml += `<option value="${pc.id}">[✅ મંજૂર થયેલ] ${pc.kapanNo} (${pc.roughName || ""})</option>`;
         });
         optionsHtml += `</optgroup>`;
@@ -3557,15 +3564,23 @@
               ? `<span class="status-repair" style="display:inline-block; font-size:10px; padding:1px 4px; margin-top:2px;">🔧 રીપેરિંગ</span>` 
               : ``;
             
+            const chart = (state.polishCharts || []).find(pc => pc && pc.kapanNo === k.kapanNo);
+            const chartBtn = chart 
+              ? `<div style="margin-top: 5px;">
+                   <button class="btn btn-success" style="padding: 5px 8px; font-size: 11px; font-weight: 700; width: 100%; border-radius: 4px; justify-content: center;" onclick="viewChartDetailsPopup('${k.kapanNo}')">📄 ચાર્ટ જુઓ (Chart)</button>
+                 </div>` 
+              : "";
+            
             html += `
               <td style="background: #eff6ff; border: 1.5px solid var(--accent); padding: 8px; vertical-align: middle; text-align: center;">
                 <div style="font-weight:800; color:var(--primary); font-size:14px; margin-bottom: 2px;">${k.nang} Pis</div>
                 <div style="font-weight:600; color:#475569; font-size:11px;">${Number(k.carat).toFixed(2)} Cts</div>
                 ${statusLabel}
-                <div style="margin-top: 6px;">
+                <div style="margin-top: 6px; display: flex; flex-direction: column; gap: 4px;">
                   <button class="btn btn-purple" style="padding: 6px 12px; font-size: 12px; font-weight: 700; border-radius: 4px; display: inline-flex; align-items: center; gap: 4px; width:100%; justify-content:center;" onclick="openQuickTransferModal('${k.id}')" title="વિભાગ બદલો">
                     ⇄ ટ્રાન્સફર
                   </button>
+                  ${chartBtn}
                 </div>
               </td>
             `;
@@ -3648,6 +3663,7 @@
           </table>
         </div>
         <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:15px; border-top:1px solid #cbd5e1; padding-top:10px;">
+          <button class="btn btn-purple" onclick="closeChartViewModal(); loadChartInEditor('${pc.id}')">✏️ ચાર્ટ એડિટ કરો (Edit Chart)</button>
           <button class="btn btn-success" onclick="exportChartAsImage('pcCardModal_${pc.id}', '${pc.kapanNo}')">🖼️ ઈમેજ ડાઉનલોડ</button>
           <button class="btn btn-outline" onclick="closeChartViewModal()">બંધ કરો</button>
         </div>
@@ -3655,6 +3671,26 @@
       document.getElementById("chartViewModal").style.display = "flex";
     }
   }
+
+  window.loadChartInEditor = function(chartId) {
+    const pc = (state.polishCharts || []).find(x => x.id === chartId);
+    if (!pc) return;
+    
+    switchPage('polish_chart');
+    
+    const selectEl = document.getElementById("pcMergedSelect");
+    if (selectEl) {
+      let opt = Array.from(selectEl.options).find(o => o.value === pc.id);
+      if (!opt) {
+        const newOpt = document.createElement("option");
+        newOpt.value = pc.id;
+        newOpt.innerText = `[✅ મંજૂર થયેલ] ${pc.kapanNo} (${pc.roughName || ""})`;
+        selectEl.appendChild(newOpt);
+      }
+      selectEl.value = pc.id;
+      loadPolishChartForm();
+    }
+  };
 
   function closeChartViewModal() {
     document.getElementById("chartViewModal").style.display = "none";
@@ -5317,6 +5353,7 @@
     }
 
     let cutoffMs = 0;
+    let wipeOlder = false;
     const now = Date.now();
     if (timeframe === "today") {
       const todayStart = new Date();
@@ -5328,8 +5365,10 @@
       cutoffMs = now - (3 * 24 * 60 * 60 * 1000);
     } else if (timeframe === "1w") {
       cutoffMs = now - (7 * 24 * 60 * 60 * 1000);
+      wipeOlder = true;
     } else if (timeframe === "1m") {
       cutoffMs = now - (30 * 24 * 60 * 60 * 1000);
+      wipeOlder = true;
     }
 
     if (confirm(`⚠️ શું તમે ખરેખર પસંદ કરેલા સમયગાળાનો તમામ ડેટા સાફ કરવા માંગો છો? આ ક્રિયા પાછી ખેંચી શકાશે નહીં.`)) {
@@ -5346,7 +5385,8 @@
             ms = Date.parse(timestampOrId);
           }
         }
-        return ms >= cutoffMs;
+        if (isNaN(ms) || ms <= 0) return false;
+        return wipeOlder ? (ms < cutoffMs) : (ms >= cutoffMs);
       };
 
       state.kapans = (state.kapans || []).filter(k => !shouldWipe(k.createdDate) && !shouldWipe(k.id));
