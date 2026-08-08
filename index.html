@@ -596,7 +596,7 @@
 
         <!-- PHOTO 1 GRAPHICAL PAPER REPLICA FORM -->
         <form onsubmit="savePolishChart(event)" class="photo1-paper-container" id="polishChartFormCard" style="display:none;">
-          <div class="photo1-head-title">પોલિશ ચાર્ટ</div>
+          <div class="photo1-head-title" style="text-align: center;">પોલિશ ચાર્ટ</div>
 
           <div class="photo1-header-grid">
             <div>કાપણ નંબર :- <input type="text" id="pcKapanNo" required style="width:140px; font-weight:700; border:none; border-bottom:1px solid #000;"></div>
@@ -638,8 +638,8 @@
                 <td rowspan="2"><input type="text" id="pcShading" style="width:100%; border:none; text-align:center;"></td>
                 <td rowspan="2"><input type="text" id="pcTableAssort" style="width:100%; border:none; text-align:center;"></td>
                 <td rowspan="2"><input type="text" id="pcTableGlx" style="width:100%; border:none; text-align:center;"></td>
-                <td rowspan="2"><input type="text" id="pcTable4P" style="width:100%; border:none; text-align:center;"></td>
-                <td rowspan="2"><input type="text" id="pcTableRT" style="width:100%; border:none; text-align:center;"></td>
+                <td rowspan="2"><input type="text" id="pcTable4P" oninput="syncTable4PToLeft(); calculateChartCosting()" style="width:100%; border:none; text-align:center;"></td>
+                <td rowspan="2"><input type="text" id="pcTableRT" oninput="syncTableRTToLeft(); calculateChartCosting()" style="width:100%; border:none; text-align:center;"></td>
                 <td><input type="text" id="pcTableReAssort" style="width:100%; border:none; text-align:center;"></td>
                 <td><input type="text" id="pcTableKhata" style="width:100%; border:none; text-align:center;"></td>
                 <td rowspan="2"><input type="text" id="pcTableJama" style="width:100%; border:none; text-align:center;"></td>
@@ -663,13 +663,13 @@
                   <tr><td>રફ સાઇઝ</td><td><input type="text" id="pcRSize" style="width:100%; border:none; text-align:center;"></td></tr>
                   <tr><td>ક્રાફ સાઇઝ</td><td><input type="number" step="0.01" id="pcCardSize" style="width:100%; border:none; text-align:center;"></td></tr>
                   <tr><td>માંગેલું વજન %</td><td><input type="number" step="0.01" id="pcReqWeightPct" oninput="calculateChartCosting()" style="width:100%; border:none; text-align:center;"></td></tr>
-                  <tr><td>4P %</td><td><input type="number" step="0.01" id="pcFourPPct" style="width:100%; border:none; text-align:center;"></td></tr>
-                  <tr><td>RT %</td><td><input type="number" step="0.01" id="pcRTPct" style="width:100%; border:none; text-align:center;"></td></tr>
+                  <tr><td>4P %</td><td><input type="number" step="0.01" id="pcFourPPct" oninput="syncLeftToTable4P(); calculateChartCosting()" style="width:100%; border:none; text-align:center;"></td></tr>
+                  <tr><td>RT %</td><td><input type="number" step="0.01" id="pcRTPct" oninput="syncLeftToTableRT(); calculateChartCosting()" style="width:100%; border:none; text-align:center;"></td></tr>
                   <tr><td>તૈયાર ગુણાકાર %</td><td><input type="number" step="0.01" id="pcMultPct" style="width:100%; border:none; text-align:center;"></td></tr>
-                  <tr><td>રફ TO પોલીસ %</td><td><input type="number" step="0.01" id="pcRToPolishPct" style="width:100%; border:none; text-align:center;" readonly></td></tr>
+                  <tr><td>રફ TO પોલીસ %</td><td><input type="number" step="0.01" id="pcRToPolishPct" oninput="this.setAttribute('data-auto', 'false'); calculateChartCosting()" style="width:100%; border:none; text-align:center;"></td></tr>
                   <tr><td>વેરીએશન %</td><td><input type="number" step="0.01" id="pcVarPct" style="width:100%; border:none; text-align:center;" readonly></td></tr>
-                  <tr><td>વજન ફોર્મ્યુલા</td><td><input type="text" id="pcWeightFormula" style="width:100%; border:none; text-align:center;"></td></tr>
-                  <tr><td>G - નંગ</td><td><input type="text" id="pcGNangFormula" style="width:100%; border:none; text-align:center;"></td></tr>
+                  <tr><td>વજન ફોર્મ્યુલા</td><td><input type="text" id="pcWeightFormula" oninput="this.setAttribute('data-auto', 'false'); calculateChartCosting()" style="width:100%; border:none; text-align:center;"></td></tr>
+                  <tr><td>G - નંગ</td><td><input type="text" id="pcGNangFormula" oninput="this.setAttribute('data-auto', 'false'); calculateChartCosting()" style="width:100%; border:none; text-align:center;"></td></tr>
                 </tbody>
               </table>
             </div>
@@ -725,11 +725,8 @@
 
           <!-- BOTTOM SECTION -->
           <div style="display:flex; justify-content:space-between; align-items:stretch; gap:10px; margin-top:12px; border-top: 1.5px solid #000; padding-top:10px;">
-            <div style="flex:2; display:grid; grid-template-columns: repeat(3, 1fr); gap:10px;">
-              <div style="border:1.5px solid #000; padding:6px; text-align:center; background:#fff;">
-                <b>પોલિશ નંગ (Pcs) <span class="req-star">*</span></b><br>
-                <input type="number" id="pcPolishNang" oninput="calculateChartCosting()" style="width:100%; font-size:16px; font-weight:800; border:none; text-align:center; background:transparent;" required>
-              </div>
+            <div style="flex:2; display:grid; grid-template-columns: repeat(2, 1fr); gap:10px;">
+              <input type="hidden" id="pcPolishNang" value="0">
               <div style="border:1.5px solid #000; padding:6px; text-align:center; background:#fff;">
                 <b>પોલિશ વજન (Cts) <span class="req-star">*</span></b><br>
                 <input type="number" step="0.01" id="pcPolishCarat" oninput="calculateChartCosting()" style="width:100%; font-size:16px; font-weight:800; border:none; text-align:center; background:transparent;" required>
@@ -742,16 +739,20 @@
             
             <div style="flex:1; border:1.5px solid #000; padding:6px; background:#f8fafc; text-align:center; display:flex; flex-direction:column; justify-content:center;">
               <span style="font-size:11px; font-weight:700; color:var(--primary); margin-bottom:4px;">રીપેરીંગ એન્ટ્રી (Manual Repair Entry)</span>
-              <div style="display:flex; gap:4px; justify-content:center; align-items:center;">
+              <div style="display:flex; gap:4px; justify-content:center; align-items:center; margin-bottom:4px;">
                 <input type="number" id="pcManualRepairNang" placeholder="નંગ" style="width:50px; text-align:center; border:1px solid #cbd5e1; border-radius:4px; padding:2px; font-size:12px;">
                 <input type="number" step="0.01" id="pcManualRepairCarat" placeholder="વજન" style="width:65px; text-align:center; border:1px solid #cbd5e1; border-radius:4px; padding:2px; font-size:12px;">
                 <button type="button" class="btn btn-purple" onclick="addRepairFromChart()" style="padding:2px 6px; font-size:11px; font-weight:700; height:24px; display:flex; align-items:center;">➕</button>
               </div>
+              <div id="pcRepairsListArea" style="font-size:11px; color:#475569; max-height:60px; overflow-y:auto; border-top:1px solid #e2e8f0; padding-top:4px; text-align:left;"></div>
             </div>
           </div>
 
-          <div style="margin-top:10px; border-top:1.5px dashed #000; padding-top:8px;">
-            <label><b>એકત્રિત વિગત / નોંધ (Vigat/Remarks):</b></label>
+          <div style="margin-top:10px; border-top:1.5px dashed #000; padding-top:8px; display:flex; flex-direction:column; gap:4px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <label><b>એકત્રિત વિગત / નોંધ (Vigat/Remarks):</b></label>
+              <button type="button" class="btn btn-outline" onclick="expandAllVigatToRemarks()" style="padding:2px 8px; font-size:11px; font-weight:700; height:22px; display:flex; align-items:center; border-color:#cbd5e1; color:#475569;">📋 Expand All Vigat</button>
+            </div>
             <textarea id="pcVigat" rows="2" style="width:100%; font-weight:700; color:#1e3a8a; margin-top:4px;"></textarea>
           </div>
 

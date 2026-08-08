@@ -310,6 +310,14 @@
       if (remEl) remEl.checked = true;
     }
 
+    // Start activity tracking and check interval
+    window.addEventListener("mousemove", resetUserActivity);
+    window.addEventListener("keydown", resetUserActivity);
+    window.addEventListener("click", resetUserActivity);
+    window.addEventListener("touchstart", resetUserActivity);
+    resetUserActivity();
+    setInterval(checkAutoLogout, 10000);
+
     // Show login page, hide app interface on load (login system active)
     const loginPage = document.getElementById("loginPage");
     const appInterface = document.getElementById("appInterface");
@@ -580,7 +588,8 @@
           depts: parsed.depts || [],
           deptConfigs: parsed.deptConfigs || {},
           autoLogoutHours: parsed.autoLogoutHours !== undefined ? parsed.autoLogoutHours : 11,
-          firebaseConfig: parsed.firebaseConfig || { apiKey: "AIzaSyDvu7pJMXatKNHFAuJMtsh_zpmb8Jr0BCM", dbUrl: "https://ng-cost-default-rtdb.firebaseio.com", projectId: "ng-cost" }
+          firebaseConfig: parsed.firebaseConfig || { apiKey: "AIzaSyDvu7pJMXatKNHFAuJMtsh_zpmb8Jr0BCM", dbUrl: "https://ng-cost-default-rtdb.firebaseio.com", projectId: "ng-cost" },
+          firebaseWiped: parsed.firebaseWiped !== undefined ? parsed.firebaseWiped : false
         };
 
         if (state.depts && state.depts.length > 0) {
@@ -649,7 +658,7 @@
 
   function checkInitialData() {
     // Run cleanup of old mock data EXACTLY ONCE to protect future live entries
-    if (!state.prunedMockData_v6 || (state.kapans && state.kapans.length < 5)) {
+    if (!state.prunedMockData_v6) {
       state.roughLots = [
         { id: "R_AL65", name: "try 000", party: "Anilbhai", carats: 97.88, rate: 2770, finalRoughAmt: 271128, vigat: "AL 65 Rough", date: "2026-06-11T12:00:00Z" },
         { id: "R_LOT101", name: "lot 101", party: "Kiritbhai", carats: 500.00, rate: 2500, finalRoughAmt: 1250000, vigat: "Lot 101 Raw", date: "2026-07-20T10:00:00Z" }
@@ -876,7 +885,7 @@
       chart = {
         id: "PC" + Date.now() + "_" + Math.random().toString(36).substr(2, 4),
         kapanNo: k.kapanNo,
-        roughName: rough ? rough.name : "",
+        roughName: (rough ? rough.name : "") + (k.vigat ? " / " + k.vigat : ""),
         date: new Date().toISOString().split("T")[0],
         status: "Draft",
         assort: "",
@@ -907,7 +916,8 @@
         rToPolishPct: parseFloat(defaultAchievedPct.toFixed(2)),
         varPct: parseFloat((defaultAchievedPct - (k.r2pPct || 0)).toFixed(2)),
         weightFormula: roughWeight.toFixed(2) + " * " + Math.round(roughRate),
-        gNangFormula: Math.round(defaultPolishNang * masterMajRate).toString(),
+        gNangFormula: defaultPolishNang + " X " + masterMajRate,
+        majuriRate: masterMajRate,
 
         // Planning inputs
         salePct: 0,
@@ -931,7 +941,7 @@
         polishNang: defaultPolishNang,
         polishCarat: defaultPolishCarat,
         padtar: initialPadtar,
-        vigat: k.vigat || "ઓટો-જનરેટેડ ડ્રાફ્ટ ચાર્ટ"
+        vigat: k.vigat || ""
       };
       state.polishCharts.push(chart);
     }
@@ -995,6 +1005,7 @@
 
       currentUser = role === "Admin" ? "Admin" : "Stock Dep";
       currentRole = role;
+      resetUserActivity();
       document.getElementById("displayUser").innerText = currentUser;
       document.getElementById("roleBadge").innerText = role === "Admin" ? "👑 ADMIN" : "📦 STOCK DEP";
       document.getElementById("loginPage").style.display = "none";
@@ -2395,8 +2406,8 @@
       const derivedPolishCarat = khataOutTx ? khataOutTx.carat : (chart ? (parseFloat(chart.polishCarat) || 0) : (isCompleted ? (k.carat || 0) : 0));
       const derivedPolishNang = khataOutTx ? khataOutTx.nang : (isCompleted ? (chart ? (chart.polishNang || k.nang) : k.nang) : 0);
 
-      const masterMajRate = state.majuriRate !== undefined ? state.majuriRate : 65;
-      const majuri = isCompleted ? Math.round(derivedPolishNang * masterMajRate) : 0;
+      const kapanMajRate = (chart && chart.majuriRate != null) ? chart.majuriRate : (k.majuriRate != null ? k.majuriRate : (state.majuriRate !== undefined ? state.majuriRate : 65));
+      const majuri = isCompleted ? Math.round(derivedPolishNang * kapanMajRate) : 0;
       const toAmt = isCompleted ? (rafAmt + majuri) : rafAmt;
 
       const expectedPct = k.r2pPct || 0;
@@ -2547,12 +2558,154 @@
     loadPolishChartForm();
   }
 
+  window.addRepairFromChart = function() {
+    const kapanNo = document.getElementById("pcKapanNo").value;
+    if (!kapanNo) {
+      alert("❌ કૃપા કરીને કાપણ પસંદ કરો!");
+      return;
+    }
+    const k = (state.kapans || []).find(x => x.kapanNo === kapanNo);
+    const nangVal = parseInt(document.getElementById("pcManualRepairNang").value) || 0;
+    const caratVal = parseFloat(document.getElementById("pcManualRepairCarat").value) || 0;
+
+    if (nangVal <= 0 && caratVal <= 0) {
+      alert("❌ કૃપા કરીને સાચું નંગ અથવા વજન દાખલ કરો!");
+      return;
+    }
+
+    const newRep = {
+      id: "REP" + Date.now(),
+      kapanNo: kapanNo,
+      dept: k ? k.currentDept : "RT",
+      carat: caratVal,
+      nang: nangVal,
+      vigat: "ચાર્ટ દ્વારા મેન્યુઅલ રીપેરીંગ એન્ટ્રી",
+      status: "Active",
+      sentDate: new Date().toISOString()
+    };
+
+    state.repairs = state.repairs || [];
+    state.repairs.unshift(newRep);
+    
+    document.getElementById("pcManualRepairNang").value = "";
+    document.getElementById("pcManualRepairCarat").value = "";
+
+    saveState();
+    loadPolishChartForm();
+    showToast("🔧 રીપેરીંગ એન્ટ્રી સફળતાપૂર્વક ઉમેરાઈ!");
+  };
+
+  window.deleteRepairFromChart = function(repairId) {
+    if (confirm("શું તમે આ રીપેરીંગ એન્ટ્રી કાઢી નાખવા માંગો છો?")) {
+      state.repairs = (state.repairs || []).filter(r => r.id !== repairId);
+      saveState();
+      loadPolishChartForm();
+      showToast("🔧 રીપેરીંગ એન્ટ્રી કાઢી નાખવામાં આવી!");
+    }
+  };
+
+  window.syncTable4PToLeft = function() {
+    const val = document.getElementById("pcTable4P").value.replace("%", "").trim();
+    if (!isNaN(val) && val !== "") {
+      document.getElementById("pcFourPPct").value = parseFloat(val);
+    } else {
+      document.getElementById("pcFourPPct").value = "";
+    }
+  };
+
+  window.syncLeftToTable4P = function() {
+    const val = document.getElementById("pcFourPPct").value;
+    document.getElementById("pcTable4P").value = val !== "" ? val + "%" : "";
+  };
+
+  window.syncTableRTToLeft = function() {
+    const val = document.getElementById("pcTableRT").value.replace("%", "").trim();
+    if (!isNaN(val) && val !== "") {
+      document.getElementById("pcRTPct").value = parseFloat(val);
+    } else {
+      document.getElementById("pcRTPct").value = "";
+    }
+  };
+
+  window.syncLeftToTableRT = function() {
+    const val = document.getElementById("pcRTPct").value;
+    document.getElementById("pcTableRT").value = val !== "" ? val + "%" : "";
+  };
+
+  window.expandAllVigatToRemarks = function() {
+    const pcKapanSelectEl = document.getElementById("pcMergedSelect");
+    const activeKapanId = pcKapanSelectEl ? pcKapanSelectEl.value : "";
+    const k = (state.kapans || []).find(x => x.id === activeKapanId);
+    if (!k) return;
+
+    const transfersForKapan = (state.transfers || []).filter(t => t.kapanNo && typeof t.kapanNo === "string" && t.kapanNo.trim().toLowerCase() === k.kapanNo.trim().toLowerCase());
+    const remarks = transfersForKapan
+      .filter(t => t.vigat && t.vigat.trim())
+      .map(t => `${t.fromDept}➔${t.toDept}: ${t.vigat}`)
+      .join(" | ");
+
+    const textarea = document.getElementById("pcVigat");
+    if (textarea) {
+      if (remarks) {
+        if (textarea.value.trim()) {
+          textarea.value = textarea.value.trim() + " | " + remarks;
+        } else {
+          textarea.value = remarks;
+        }
+      } else {
+        showToast("આ કાપણ માટે કોઈ વિગતવાર રીમાર્કસ મળ્યા નથી.", "warning");
+      }
+    }
+  };
+
+  function parseFormulaString(val) {
+    if (!val) return null;
+    const parts = val.split(/[*xX]/);
+    if (parts.length === 2) {
+      const v1 = parseFloat(parts[0].trim());
+      const v2 = parseFloat(parts[1].trim());
+      if (!isNaN(v1) && !isNaN(v2)) {
+        return { val1: v1, val2: v2 };
+      }
+    }
+    return null;
+  }
+
   function calculateChartCosting() {
-    const rWeight = parseFloat(document.getElementById("pcRWeight").value) || 0;
-    const roughBhav = parseFloat(document.getElementById("pcRoughBhav").value) || 0;
-    const polishNang = parseInt(document.getElementById("pcPolishNang").value) || 0;
+    let rWeight = parseFloat(document.getElementById("pcRWeight").value) || 0;
+    let roughBhav = parseFloat(document.getElementById("pcRoughBhav").value) || 0;
+
+    const weightFormulaEl = document.getElementById("pcWeightFormula");
+    const weightFormulaAuto = weightFormulaEl ? weightFormulaEl.getAttribute("data-auto") === "true" : true;
+    if (!weightFormulaAuto && weightFormulaEl) {
+      const parsed = parseFormulaString(weightFormulaEl.value);
+      if (parsed) {
+        rWeight = parsed.val1;
+        roughBhav = parsed.val2;
+        document.getElementById("pcRWeight").value = rWeight;
+        document.getElementById("pcRoughBhav").value = roughBhav;
+      }
+    } else if (weightFormulaEl) {
+      weightFormulaEl.value = rWeight.toFixed(2) + " * " + Math.round(roughBhav);
+    }
+
+    let polishNang = parseInt(document.getElementById("pcPolishNang").value) || 0;
+    let masterMajRate = state.majuriRate !== undefined ? state.majuriRate : 65;
+
+    const gNangFormulaEl = document.getElementById("pcGNangFormula");
+    const gNangFormulaAuto = gNangFormulaEl ? gNangFormulaEl.getAttribute("data-auto") === "true" : true;
+    if (!gNangFormulaAuto && gNangFormulaEl) {
+      const parsed = parseFormulaString(gNangFormulaEl.value);
+      if (parsed) {
+        polishNang = Math.round(parsed.val1);
+        masterMajRate = parsed.val2;
+        document.getElementById("pcPolishNang").value = polishNang;
+      }
+    } else if (gNangFormulaEl) {
+      gNangFormulaEl.value = polishNang + " X " + masterMajRate;
+    }
+
     const polishCarat = parseFloat(document.getElementById("pcPolishCarat").value) || 0;
-    const masterMajRate = state.majuriRate !== undefined ? state.majuriRate : 65;
 
     const roughAmt = rWeight * roughBhav;
     const majuri = polishNang * masterMajRate;
@@ -2571,12 +2724,25 @@
     const pcKapanSelectEl = document.getElementById("pcMergedSelect");
     const activeKapanId = pcKapanSelectEl ? pcKapanSelectEl.value : "";
     const k = (state.kapans || []).find(x => x.id === activeKapanId);
-    const rtCt = k ? (k.rtCt || 0) : 0;
-    const roughPcs = k ? (k.nang || 0) : 0;
+    
+    let rtCt = 0;
+    let roughPcs = 0;
+    if (k) {
+      roughPcs = k.nang || 0;
+      const transfersForKapan = (state.transfers || []).filter(t => t.kapanNo && typeof t.kapanNo === "string" && t.kapanNo.trim().toLowerCase() === k.kapanNo.trim().toLowerCase());
+      const rtOutTx = transfersForKapan.find(t => t.fromDept === "RT");
+      rtCt = rtOutTx ? rtOutTx.carat : (k.rtCt || 0);
+    }
+
+    const rToPolishPctEl = document.getElementById("pcRToPolishPct");
+    const rToPolishPctAuto = rToPolishPctEl ? rToPolishPctEl.getAttribute("data-auto") === "true" : true;
+    let achievedPct = parseFloat(rToPolishPctEl ? rToPolishPctEl.value : 0) || 0;
 
     if (rWeight > 0) {
-      const achievedPct = (polishCarat / rWeight) * 100;
-      document.getElementById("pcRToPolishPct").value = achievedPct.toFixed(2);
+      if (rToPolishPctAuto && rToPolishPctEl) {
+        achievedPct = (polishCarat / rWeight) * 100;
+        rToPolishPctEl.value = achievedPct.toFixed(2);
+      }
       
       // તૈયાર ગુણાકાર % = Polish Weight / RT Weight (linked to Excel B16)
       const multPctVal = rtCt > 0 ? (polishCarat / rtCt * 100) : 0;
@@ -2588,16 +2754,6 @@
       
       // રફ સાઇઝ (Rough Size) = Rough Pcs / Rough Weight (linked to Excel G5)
       document.getElementById("pcRSize").value = (roughPcs / rWeight).toFixed(2);
-      
-      const weightAuto = document.getElementById("pcWeightFormula").getAttribute("data-auto") === "true";
-      if (weightAuto) {
-        document.getElementById("pcWeightFormula").value = rWeight.toFixed(2) + " * " + Math.round(roughBhav);
-      }
-    }
-    
-    const gNangAuto = document.getElementById("pcGNangFormula").getAttribute("data-auto") === "true";
-    if (gNangAuto) {
-      document.getElementById("pcGNangFormula").value = polishNang + " * " + masterMajRate;
     }
   }
 
@@ -2656,7 +2812,7 @@
     const rough = (state.roughLots || []).find(r => r.id === k.roughId);
 
     document.getElementById("pcKapanNo").value = chart.kapanNo;
-    document.getElementById("pcRoughName").value = chart.roughName || "";
+    document.getElementById("pcRoughName").value = chart.roughName || ((rough ? rough.name : "") + (k.vigat ? " / " + k.vigat : ""));
     document.getElementById("pcDate").value = chart.date || new Date().toISOString().slice(0,10);
     document.getElementById("pcAssort").value = chart.assort || "";
     document.getElementById("pcReAssort").value = chart.reAssort || "";
@@ -2682,7 +2838,16 @@
     document.getElementById("pcTableRT").value = chart.tableRT != null && chart.tableRT !== "" && (chart.tableRT.includes("%") || isNaN(chart.tableRT)) ? chart.tableRT : defaultRTPctStr;
     document.getElementById("pcTableReAssort").value = chart.tableReAssort != null && chart.tableReAssort !== "" && isNaN(chart.tableReAssort) ? chart.tableReAssort : "OK";
     document.getElementById("pcTableKhata").value = chart.tableKhata != null && chart.tableKhata !== "" && isNaN(chart.tableKhata) ? chart.tableKhata : "OK";
-    document.getElementById("pcTableJama").value = chart.tableJama != null && chart.tableJama !== "" && isNaN(chart.tableJama) ? chart.tableJama : "જમા";
+    
+    let defaultJamaVal = "જમા";
+    if (k && k.createdDate) {
+      const startDate = new Date(k.createdDate);
+      const endDate = chart.date ? new Date(chart.date) : new Date();
+      const diffTime = Math.abs(endDate - startDate);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      defaultJamaVal = diffDays + " Days";
+    }
+    document.getElementById("pcTableJama").value = chart.tableJama != null && chart.tableJama !== "" ? chart.tableJama : defaultJamaVal;
     document.getElementById("pcTableVigat").value = chart.tableVigat || "";
     document.getElementById("pcTableRaOut").value = chart.tableRaOut || "";
     document.getElementById("pcTablePoHead").value = chart.tablePoHead || "";
@@ -2708,12 +2873,14 @@
     document.getElementById("pcVarPct").value = chart.varPct != null ? chart.varPct : 0;
     
     // Setup defaults for Weight and G-Nung
-    const masterMajRate = state.majuriRate !== undefined ? state.majuriRate : 65;
+    const masterMajRate = chart.majuriRate || (k.majuriRate != null ? k.majuriRate : (state.majuriRate !== undefined ? state.majuriRate : 65));
     const currentRoughRate = k.roughRate !== undefined ? k.roughRate : (rough ? (rough.rate || 2730) : 2730);
     const defaultWeightFormulaVal = currentRWeight.toFixed(2) + " * " + Math.round(currentRoughRate);
     document.getElementById("pcWeightFormula").value = chart.weightFormula || defaultWeightFormulaVal;
     document.getElementById("pcWeightFormula").setAttribute("data-auto", chart.weightFormula ? "false" : "true");
-    document.getElementById("pcGNangFormula").value = chart.gNangFormula || Math.round(defaultNang * masterMajRate);
+    
+    const defaultGNangFormulaVal = defaultNang + " X " + masterMajRate;
+    document.getElementById("pcGNangFormula").value = chart.gNangFormula || defaultGNangFormulaVal;
     document.getElementById("pcGNangFormula").setAttribute("data-auto", chart.gNangFormula ? "false" : "true");
 
     // Load planning details
@@ -2747,6 +2914,26 @@
     document.getElementById("pcPolishCarat").value = chart.polishCarat || (k.rtCt || k.fourPCt || k.makeableVajan || k.carat);
     document.getElementById("pcPadtar").value = chart.padtar || 0;
     document.getElementById("pcVigat").value = chart.vigat || "";
+
+    const rToPolishPctEl = document.getElementById("pcRToPolishPct");
+    if (rToPolishPctEl) {
+      rToPolishPctEl.value = chart.rToPolishPct != null ? chart.rToPolishPct : (k.r2pPct || 0);
+      rToPolishPctEl.setAttribute("data-auto", chart.rToPolishPct != null ? "false" : "true");
+    }
+
+    const repairsListEl = document.getElementById("pcRepairsListArea");
+    if (repairsListEl) {
+      if (repairsForKapan.length > 0) {
+        repairsListEl.innerHTML = repairsForKapan.map((r, idx) => `
+          <div style="display:flex; justify-content:space-between; margin-bottom:2px; padding: 2px 4px; background: #fff; border: 1px solid #e2e8f0; border-radius: 4px;">
+            <span>${idx+1}. નંગ: ${r.nang} | વજન: ${r.carat.toFixed(2)} Cts</span>
+            <span style="color:#ef4444; cursor:pointer; font-weight:700;" onclick="deleteRepairFromChart('${r.id}')">❌</span>
+          </div>
+        `).join("");
+      } else {
+        repairsListEl.innerHTML = `<div style="text-align:center; color:#94a3b8; font-style:italic;">કોઈ રીપેરિંગ વિગત નથી</div>`;
+      }
+    }
 
     // Reset manual repair inputs
     document.getElementById("pcManualRepairNang").value = "";
@@ -2828,6 +3015,15 @@
     chart.polishNang = parseInt(document.getElementById("pcPolishNang").value) || 0;
     chart.padtar = parseFloat(document.getElementById("pcPadtar").value) || 0;
     chart.vigat = document.getElementById("pcVigat").value.trim();
+    
+    // Parse majuri rate from G-Nang formula to save it custom
+    let parsedMajRate = state.majuriRate !== undefined ? state.majuriRate : 65;
+    const parsedG = parseFormulaString(document.getElementById("pcGNangFormula").value);
+    if (parsedG) {
+      parsedMajRate = parsedG.val2;
+    }
+    chart.majuriRate = parsedMajRate;
+    
     chart.status = "Approved";
 
     if (isNew) {
@@ -2839,6 +3035,7 @@
       k.status = "Completed";
       k.carat = chart.polishCarat;
       k.nang = chart.polishNang || k.nang;
+      k.majuriRate = chart.majuriRate;
     }
 
     saveState();
@@ -2957,7 +3154,7 @@
 
     return `
       <div class="photo1-paper-container" id="${idPrefix}_${pc.id}" style="margin-bottom:20px; border:3px solid #000; padding:16px; background:#fff; color:#000;">
-        <div class="photo1-head-title" style="text-align: right; font-size: 26px; font-weight: 900; text-decoration: underline; margin-bottom: 10px;">પોલિશ ચાર્ટ</div>
+        <div class="photo1-head-title" style="text-align: center; font-size: 26px; font-weight: 900; text-decoration: underline; margin-bottom: 10px;">પોલિશ ચાર્ટ</div>
         <div class="photo1-header-grid" style="display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 6px; margin-bottom: 10px; font-weight: 700; font-size: 15px;">
           <span>કાપણ નંબર :- <b>${pc.kapanNo}</b></span>
           <span>રફ નામ :- <b>${pc.roughName}</b></span>
@@ -3002,7 +3199,20 @@
               <td style="border: 1.5px solid #000; padding: 4px 6px; text-align:center; font-weight:700;">${pc.tableRT != null && pc.tableRT !== "" ? pc.tableRT : ""}</td>
               <td style="border: 1.5px solid #000; padding: 4px 6px; text-align:center; font-weight:700;">${pc.tableReAssort != null && pc.tableReAssort !== "" ? pc.tableReAssort : "OK"}</td>
               <td style="border: 1.5px solid #000; padding: 4px 6px; text-align:center; font-weight:700;">${pc.tableKhata != null && pc.tableKhata !== "" ? pc.tableKhata : "OK"}</td>
-              <td style="border: 1.5px solid #000; padding: 4px 6px; text-align:center; font-weight:700; background:#fef08a;">${pc.tableJama != null && pc.tableJama !== "" ? pc.tableJama : "જમા"}</td>
+              <td style="border: 1.5px solid #000; padding: 4px 6px; text-align:center; font-weight:700; background:#fef08a;">
+                ${(() => {
+                  const k = (state.kapans || []).find(x => x.kapanNo === pc.kapanNo);
+                  let defaultJamaVal = "જમા";
+                  if (k && k.createdDate) {
+                    const startDate = new Date(k.createdDate);
+                    const endDate = pc.date ? new Date(pc.date) : new Date();
+                    const diffTime = Math.abs(endDate - startDate);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    defaultJamaVal = diffDays + " Days";
+                  }
+                  return pc.tableJama != null && pc.tableJama !== "" ? pc.tableJama : defaultJamaVal;
+                })()}
+              </td>
               <td style="border: 1.5px solid #000; padding: 4px 6px;">${pc.tableVigat || ""}</td>
             </tr>
           </tbody>
@@ -4411,7 +4621,8 @@
         },
         majuriRate: 65,
         roughLots: [], kapans: [], transfers: [], repairs: [], audits: [], polishCharts: [], transferRules: [],
-        depts: [...DEPTS], deptConfigs: {}, autoLogoutHours: 11, firebaseConfig: { apiKey: "AIzaSyDvu7pJMXatKNHFAuJMtsh_zpmb8Jr0BCM", dbUrl: "https://ng-cost-default-rtdb.firebaseio.com", projectId: "ng-cost" }, firebaseWiped: false
+        depts: [...DEPTS], deptConfigs: {}, autoLogoutHours: 11, firebaseConfig: { apiKey: "AIzaSyDvu7pJMXatKNHFAuJMtsh_zpmb8Jr0BCM", dbUrl: "https://ng-cost-default-rtdb.firebaseio.com", projectId: "ng-cost" }, firebaseWiped: false,
+        prunedMockData_v6: true
       };
       if (dbRef) dbRef.set(state).catch(e => console.error('Reset sync failed:', e));
       checkInitialData();
@@ -4434,7 +4645,8 @@
         },
         majuriRate: 65,
         roughLots: [], kapans: [], transfers: [], repairs: [], audits: [], polishCharts: [], transferRules: [],
-        depts: [...DEPTS], deptConfigs: {}, autoLogoutHours: 11, firebaseConfig: { apiKey: "AIzaSyDvu7pJMXatKNHFAuJMtsh_zpmb8Jr0BCM", dbUrl: "https://ng-cost-default-rtdb.firebaseio.com", projectId: "ng-cost" }, firebaseWiped: false
+        depts: [...DEPTS], deptConfigs: {}, autoLogoutHours: 11, firebaseConfig: { apiKey: "AIzaSyDvu7pJMXatKNHFAuJMtsh_zpmb8Jr0BCM", dbUrl: "https://ng-cost-default-rtdb.firebaseio.com", projectId: "ng-cost" }, firebaseWiped: false,
+        prunedMockData_v6: true
       };
       if (dbRef) dbRef.set(state).catch(e => console.error('Reset sync failed:', e));
       checkInitialData();
@@ -4518,19 +4730,32 @@
     showToast('Firebase કન્ફિગરેશન સંગ્રહિત થઈ', 'success');
   }
 
-  let autoLogoutTimer = null;
-  function initAutoLogoutTimer() {
-    if (autoLogoutTimer) clearTimeout(autoLogoutTimer);
+  let lastActivitySaveTime = 0;
+  function resetUserActivity() {
+    const now = Date.now();
+    if (now - lastActivitySaveTime > 5000) {
+      safeStorage.setItem("last_activity_time", now.toString());
+      lastActivitySaveTime = now;
+    }
+  }
+
+  function checkAutoLogout() {
+    if (!currentUser) return;
     const hrs = state.autoLogoutHours;
     if (!hrs || hrs <= 0) return;
-    const ms = hrs * 60 * 60 * 1000;
-    autoLogoutTimer = setTimeout(() => {
+
+    const lastActivity = parseInt(safeStorage.getItem("last_activity_time")) || Date.now();
+    const elapsedMs = Date.now() - lastActivity;
+    const limitMs = hrs * 60 * 60 * 1000;
+
+    if (elapsedMs >= limitMs) {
       alert('⏰ ઓટો લોગઆઉટ: સમય સમાપ્ત થયો');
-      const lp = document.getElementById('loginPage');
-      const ai = document.getElementById('appInterface');
-      if (lp) lp.style.display = 'flex';
-      if (ai) ai.style.display = 'none';
-    }, ms);
+      logout();
+    }
+  }
+
+  function initAutoLogoutTimer() {
+    resetUserActivity();
   }
 
   // GLOBAL KEYBOARD SHORTCUTS FOR MODALS AND EASY ACTION
@@ -4667,6 +4892,25 @@
   async function renderLocalBackupControls(containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
+
+    if (!('showDirectoryPicker' in window)) {
+      container.innerHTML = `
+        <div class="sticker-card" style="cursor:default; border-left: 4px solid #ef4444; padding:15px; background:#fef2f2; border-radius:8px;">
+          <div style="font-weight:800; font-size:15px; color:#991b1b; display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+            <span>⚠️</span> સ્થાનિક બેકઅપ ઉપલબ્ધ નથી (Local Backup Not Supported)
+          </div>
+          <div style="font-size:12.5px; color:#7f1d1d; line-height:1.5; margin-bottom:15px;">
+            તમારું બ્રાઉઝર ઓટો-લોકલ ફોલ્ડર બેકઅપ સપોર્ટ કરતું નથી (આ સપોર્ટ ફક્ત Chrome, Edge અથવા Opera જેવા ડેસ્કટોપ બ્રાઉઝર્સ પર ઉપલબ્ધ છે).
+            <br><br>
+            કૃપા કરીને નીચે આપેલા અથવા સેટિંગ્સમાં આપેલા <b>"Download Backup" (મેન્યુઅલ બેકઅપ)</b> બટનનો ઉપયોગ કરી ફાઇલ સેવ કરો અથવા ડેસ્કટોપ કોમ્પ્યુટર પર Chrome બ્રાઉઝર વાપરો.
+          </div>
+          <button type="button" class="btn btn-danger" onclick="downloadBackup()" style="font-weight:800; padding:8px 16px; font-size:13px; border-radius:6px; box-shadow: 0 2px 4px rgba(220,38,38,0.2);">
+            📥 મેન્યુઅલ બેકઅપ ફાઇલ ડાઉનલોડ કરો (Download Backup)
+          </button>
+        </div>
+      `;
+      return;
+    }
 
     if (!state.offlineBackupConfig) {
       state.offlineBackupConfig = {
@@ -4923,6 +5167,18 @@
   }
 
   async function triggerManualBackupFromBanner() {
+    if (!('showDirectoryPicker' in window)) {
+      downloadBackup();
+      if (state.offlineBackupConfig) {
+        state.offlineBackupConfig.lastBackupTime = new Date().toISOString();
+        saveState();
+      }
+      showToast("💾 બેકઅપ ફાઇલ ડાઉનલોડ થઈ ગઈ!");
+      document.getElementById("backupReminderBanner").style.display = "none";
+      renderAll();
+      return;
+    }
+
     const handle = await getStoredBackupHandle();
     if (!handle) {
       if (currentRole === "Admin") {
@@ -5048,7 +5304,8 @@
           },
           majuriRate: 65,
           roughLots: [], kapans: [], transfers: [], repairs: [], audits: [], polishCharts: [], transferRules: [],
-          depts: [...DEPTS], deptConfigs: {}, autoLogoutHours: 11, firebaseConfig: { apiKey: "AIzaSyDvu7pJMXatKNHFAuJMtsh_zpmb8Jr0BCM", dbUrl: "https://ng-cost-default-rtdb.firebaseio.com", projectId: "ng-cost" }, firebaseWiped: false
+          depts: [...DEPTS], deptConfigs: {}, autoLogoutHours: 11, firebaseConfig: { apiKey: "AIzaSyDvu7pJMXatKNHFAuJMtsh_zpmb8Jr0BCM", dbUrl: "https://ng-cost-default-rtdb.firebaseio.com", projectId: "ng-cost" }, firebaseWiped: false,
+          prunedMockData_v6: true
         };
         if (dbRef) dbRef.set(state).catch(e => console.error('Reset sync failed:', e));
         checkInitialData();
