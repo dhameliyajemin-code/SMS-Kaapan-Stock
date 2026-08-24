@@ -1,0 +1,1045 @@
+{
+  "auth": {
+    "adminPassHash": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+    "editPassHash": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3",
+    "stockPassHash": "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3"
+  },
+  "autoLogoutHours": 11,
+  "deptConfigs": {
+    "4P": {
+      "customHeader": "",
+      "fieldsConfig": {
+        "lot": {
+          "compulsory": true,
+          "show": true
+        },
+        "nung": {
+          "compulsory": true,
+          "show": true
+        },
+        "vajan": {
+          "compulsory": true,
+          "show": true
+        }
+      },
+      "isCompulsory": false,
+      "ratePerPiece": 8,
+      "receivesFrom": [
+        "AP OK"
+      ],
+      "sendsTo": [
+        "4P OK RT BAAKI"
+      ]
+    },
+    "4P OK RT BAAKI": {
+      "customHeader": "",
+      "fieldsConfig": {
+        "lot": {
+          "compulsory": true,
+          "show": true
+        },
+        "nung": {
+          "compulsory": true,
+          "show": true
+        },
+        "vajan": {
+          "compulsory": true,
+          "show": true
+        }
+      },
+      "isCompulsory": false,
+      "ratePerPiece": 5,
+      "receivesFrom": [
+        "4P"
+      ],
+      "sendsTo": [
+        "RT"
+      ]
+    },
+    "AP OK": {
+      "customHeader": "",
+      "fieldsConfig": {
+        "lot": {
+          "compulsory": false,
+          "show": false
+        },
+        "nung": {
+          "compulsory": true,
+          "show": true
+        },
+        "vajan": {
+          "compulsory": true,
+          "show": true
+        }
+      },
+      "isCompulsory": false,
+      "ratePerPiece": 5,
+      "receivesFrom": [
+        "Galaxy"
+      ],
+      "sendsTo": [
+        "4P"
+      ]
+    },
+    "Galaxy": {
+      "customHeader": "",
+      "fieldsConfig": {
+        "lot": {
+          "compulsory": false,
+          "show": false
+        },
+        "nung": {
+          "compulsory": true,
+          "show": true
+        },
+        "vajan": {
+          "compulsory": true,
+          "show": true
+        }
+      },
+      "isCompulsory": false,
+      "ratePerPiece": 5,
+      "sendsTo": [
+        "AP OK"
+      ]
+    },
+    "KHATA": {
+      "customHeader": "",
+      "fieldsConfig": {
+        "lot": {
+          "compulsory": true,
+          "show": true
+        },
+        "nung": {
+          "compulsory": true,
+          "show": true
+        },
+        "vajan": {
+          "compulsory": true,
+          "show": true
+        }
+      },
+      "isCompulsory": false,
+      "ratePerPiece": 7,
+      "receivesFrom": [
+        "RT OK KHATA BAAKI"
+      ],
+      "sendsTo": [
+        "OK KAPAN (ઓકે કાપણ)"
+      ]
+    },
+    "OK KAPAN (ઓકે કાપણ)": {
+      "customHeader": "",
+      "fieldsConfig": {
+        "lot": {
+          "compulsory": true,
+          "show": true
+        },
+        "nung": {
+          "compulsory": true,
+          "show": true
+        },
+        "vajan": {
+          "compulsory": true,
+          "show": true
+        }
+      },
+      "isCompulsory": false,
+      "ratePerPiece": 10,
+      "receivesFrom": [
+        "KHATA"
+      ]
+    },
+    "RT": {
+      "customHeader": "",
+      "fieldsConfig": {
+        "lot": {
+          "compulsory": true,
+          "show": true
+        },
+        "nung": {
+          "compulsory": true,
+          "show": true
+        },
+        "vajan": {
+          "compulsory": true,
+          "show": true
+        }
+      },
+      "isCompulsory": false,
+      "ratePerPiece": 6,
+      "receivesFrom": [
+        "4P OK RT BAAKI"
+      ],
+      "sendsTo": [
+        "RT OK KHATA BAAKI"
+      ]
+    },
+    "RT OK KHATA BAAKI": {
+      "customHeader": "",
+      "fieldsConfig": {
+        "lot": {
+          "compulsory": true,
+          "show": true
+        },
+        "nung": {
+          "compulsory": true,
+          "show": true
+        },
+        "vajan": {
+          "compulsory": true,
+          "show": true
+        }
+      },
+      "isCompulsory": false,
+      "ratePerPiece": 5,
+      "receivesFrom": [
+        "RT"
+      ],
+      "sendsTo": [
+        "KHATA"
+      ]
+    }
+  },
+  "depts": [
+    "Galaxy",
+    "AP OK",
+    "4P",
+    "4P OK RT BAAKI",
+    "RT",
+    "RT OK KHATA BAAKI",
+    "KHATA",
+    "OK KAPAN (ઓકે કાપણ)"
+  ],
+  "firebaseConfig": {
+    "apiKey": "AIzaSyDvu7pJMXatKNHFAuJMtsh_zpmb8Jr0BCM",
+    "dbUrl": "https://ng-cost-default-rtdb.firebaseio.com",
+    "projectId": "ng-cost"
+  },
+  "firebaseWiped": true,
+  "kapans": [
+    {
+      "carat": 29.54,
+      "createdDate": "2026-08-04T10:42:29.045Z",
+      "currentDept": "OK KAPAN (ઓકે કાપણ)",
+      "id": "K1785840149045",
+      "kapanNo": "m-2-20",
+      "lastMovedDate": "2026-08-04T10:50:00.000Z",
+      "lots": 1,
+      "nang": 3664,
+      "r2pPct": 34.83,
+      "roughId": "R1785840062760",
+      "roughWeight": 89.98,
+      "status": "Chalu",
+      "tag": "Regular",
+      "vehicleTracking": "",
+      "vigat": "[Galaxy➔AP OK]: [Rough to Polish %: 34.83]  | [AP OK➔4P]: OK | [4P➔4P OK RT BAAKI]: OK | [4P OK RT BAAKI➔RT]: OK | [RT➔RT OK KHATA BAAKI]: OK | [RT OK KHATA BAAKI➔KHATA]: OK | [KHATA➔OK KAPAN (ઓકે કાપણ)]: OK"
+    },
+    {
+      "carat": 25.34,
+      "createdDate": "2026-06-04T12:00:00Z",
+      "currentDept": "OK KAPAN (ઓકે કાપણ)",
+      "fourPCt": 36.49,
+      "fourPNang": 4605,
+      "fourPPct": 23.65,
+      "id": "K_M1_124",
+      "kapanNo": "M-1-124",
+      "lastMovedDate": "2026-06-11T07:12:00Z",
+      "makeablePiece": 4636,
+      "makeableVajan": 27.86,
+      "nang": 4664,
+      "r2pPct": 28.47,
+      "roughId": "R_AL65",
+      "roughWeight": 97.88,
+      "rtCt": 35,
+      "rtNang": 4605,
+      "rtPct": 95.92,
+      "status": "Completed",
+      "tag": "Regular",
+      "vehicleTracking": "",
+      "vigat": "ઓકે કાપણ"
+    },
+    {
+      "carat": 13.5,
+      "createdDate": "2026-06-10T09:00:00Z",
+      "currentDept": "OK KAPAN (ઓકે કાપણ)",
+      "fourPCt": 19.5,
+      "fourPNang": 2380,
+      "fourPPct": 23.08,
+      "id": "K_M1_125",
+      "kapanNo": "M-1-125",
+      "lastMovedDate": "2026-06-18T14:30:00Z",
+      "makeablePiece": 2400,
+      "makeableVajan": 15,
+      "nang": 2400,
+      "r2pPct": 27,
+      "roughId": "R_AL65",
+      "roughWeight": 50,
+      "rtCt": 18.2,
+      "rtNang": 2380,
+      "rtPct": 93.33,
+      "status": "Completed",
+      "tag": "Urgent",
+      "vehicleTracking": "",
+      "vigat": "ડેમો કાપણ ૨"
+    },
+    {
+      "carat": 20,
+      "createdDate": "2026-07-21T08:00:00Z",
+      "currentDept": "OK KAPAN (ઓકે કાપણ)",
+      "fourPCt": 28,
+      "fourPNang": 3400,
+      "fourPPct": 21.43,
+      "id": "K_M1_126",
+      "kapanNo": "M-1-126",
+      "lastMovedDate": "2026-07-29T10:15:00Z",
+      "makeablePiece": 3450,
+      "makeableVajan": 22,
+      "nang": 3500,
+      "r2pPct": 26.67,
+      "roughId": "R_LOT101",
+      "roughWeight": 75,
+      "rtCt": 26.5,
+      "rtNang": 3400,
+      "rtPct": 94.64,
+      "status": "Completed",
+      "tag": "Regular",
+      "vehicleTracking": "",
+      "vigat": "ડેમો કાપણ ૩"
+    },
+    {
+      "carat": 55,
+      "createdDate": "2026-07-22T10:00:00Z",
+      "currentDept": "AP OK",
+      "id": "K_M1_127",
+      "kapanNo": "M-1-127",
+      "lastMovedDate": "2026-08-04T08:35:00.000Z",
+      "nang": 5500,
+      "roughId": "R_LOT101",
+      "roughWeight": 60,
+      "status": "Chalu",
+      "tag": "Regular",
+      "vehicleTracking": "",
+      "vigat": "ગેલેક્ષી પ્રોસેસ ચાલુ | [Galaxy➔AP OK]: OK"
+    },
+    {
+      "carat": 40,
+      "createdDate": "2026-07-23T11:00:00Z",
+      "currentDept": "AP OK",
+      "id": "K_M1_128",
+      "kapanNo": "M-1-128",
+      "lastMovedDate": "2026-07-24T12:00:00Z",
+      "nang": 800,
+      "roughId": "R_LOT101",
+      "roughWeight": 40,
+      "status": "Chalu",
+      "tag": "Sample",
+      "vehicleTracking": "",
+      "vigat": "એસોસોર્ટમેન્ટ પ્લાનિંગ ઓકે"
+    },
+    {
+      "carat": 80,
+      "createdDate": "2026-07-24T09:00:00Z",
+      "currentDept": "4P",
+      "id": "K_M1_129",
+      "kapanNo": "M-1-129",
+      "lastMovedDate": "2026-07-26T15:00:00Z",
+      "makeablePiece": 1480,
+      "makeableVajan": 25,
+      "nang": 1500,
+      "roughId": "R_LOT101",
+      "roughWeight": 80,
+      "status": "Chalu",
+      "tag": "Regular",
+      "vehicleTracking": "",
+      "vigat": "4P લેસર ચાલુ"
+    },
+    {
+      "carat": 55,
+      "createdDate": "2026-07-25T14:00:00Z",
+      "currentDept": "RT",
+      "fourPCt": 22.1,
+      "fourPNang": 935,
+      "fourPPct": 25.34,
+      "id": "K_M1_130",
+      "kapanNo": "M-1-130",
+      "lastMovedDate": "2026-07-28T09:30:00Z",
+      "makeablePiece": 940,
+      "makeableVajan": 16.5,
+      "nang": 950,
+      "roughId": "R_AL65",
+      "roughWeight": 55,
+      "status": "Chalu",
+      "tag": "Urgent",
+      "vehicleTracking": "",
+      "vigat": "RT ગર્ડલ બ્રુટિંગ"
+    },
+    {
+      "carat": 45,
+      "createdDate": "2026-07-26T10:30:00Z",
+      "currentDept": "OK KAPAN (ઓકે કાપણ)",
+      "fourPCt": 18.2,
+      "fourPNang": 805,
+      "fourPPct": 24.18,
+      "id": "K_M1_131",
+      "kapanNo": "M-1-131",
+      "lastMovedDate": "2026-08-04T08:35:00.000Z",
+      "makeablePiece": 810,
+      "makeableVajan": 13.8,
+      "nang": 820,
+      "roughId": "R_LOT101",
+      "roughWeight": 45,
+      "rtCt": 17.5,
+      "rtNang": 805,
+      "rtPct": 96.15,
+      "status": "Chalu",
+      "tag": "Regular",
+      "vehicleTracking": "",
+      "vigat": "ખાતા વિભાગમાં તળિયું/પહેલ કામ ચાલુ | [KHATA➔OK KAPAN (ઓકે કાપણ)]: OK"
+    },
+    {
+      "carat": 90,
+      "createdDate": "2026-07-27T08:00:00Z",
+      "currentDept": "Galaxy",
+      "id": "K_M1_132",
+      "kapanNo": "M-1-132",
+      "lastMovedDate": "2026-07-27T08:00:00Z",
+      "nang": 1700,
+      "roughId": "R_AL65",
+      "roughWeight": 90,
+      "status": "Chalu",
+      "tag": "Regular",
+      "vehicleTracking": "",
+      "vigat": "નવું ગેલેક્ષી કાપણ"
+    },
+    {
+      "carat": 70,
+      "createdDate": "2026-07-28T16:00:00Z",
+      "currentDept": "4P",
+      "id": "K_M1_133",
+      "kapanNo": "M-1-133",
+      "lastMovedDate": "2026-07-29T10:00:00Z",
+      "makeablePiece": 1290,
+      "makeableVajan": 21,
+      "nang": 1300,
+      "roughId": "R_LOT101",
+      "roughWeight": 70,
+      "status": "Chalu",
+      "tag": "Sample",
+      "vehicleTracking": "",
+      "vigat": "4P લેસર કટિંગ ચાલુ"
+    }
+  ],
+  "majuriRate": 65,
+  "offlineBackupConfig": {
+    "folderName": "",
+    "folderSelected": false,
+    "intervalDays": 1,
+    "lastBackupTime": "2026-08-04T12:35:50.755Z"
+  },
+  "polishCharts": [
+    {
+      "assort": "A-1",
+      "cardSize": 126.2,
+      "date": "2026-06-11",
+      "fourPPct": 23.65,
+      "g1112": 0,
+      "g5a7": 0,
+      "g8a10b": 0,
+      "gNangFormula": "4664 * 65",
+      "gowttlb": 0,
+      "gtlblbdb": 0,
+      "gwhnw": 0,
+      "id": "PC_M1_124",
+      "kapanNo": "M-1-124",
+      "micron": "M-1",
+      "multPct": 25.89,
+      "padtar": 22663,
+      "polishCarat": 25.34,
+      "polishNang": 4664,
+      "rSize": "18.5839",
+      "rToPolishPct": 25.89,
+      "rWeight": 97.88,
+      "reAssort": "RA-1",
+      "reqWeightPct": 28.47,
+      "roughName": "try 000",
+      "rtPct": 95.92,
+      "s00": 2,
+      "s000": 5,
+      "s2": 12,
+      "s20": 14,
+      "s2minus": 21,
+      "s2plus": 79,
+      "s4": 34,
+      "s65": 33,
+      "shading": "S-1",
+      "status": "Approved",
+      "table4P": "79.5%",
+      "tableAssort": "OK",
+      "tableGlx": "OK",
+      "tableJama": "જમા",
+      "tableKhata": "OK",
+      "tableRT": "43.4%",
+      "tableReAssort": "OK",
+      "tableVigat": "",
+      "varPct": -2.58,
+      "vigat": "",
+      "weightFormula": "-2.53 * 2770"
+    },
+    {
+      "assort": "A-2",
+      "cardSize": 65,
+      "date": "2026-06-18",
+      "fourPPct": 23.08,
+      "g1112": 0,
+      "g5a7": 0,
+      "g8a10b": 0,
+      "gNangFormula": "2400 * 65",
+      "gowttlb": 0,
+      "gtlblbdb": 0,
+      "gwhnw": 0,
+      "id": "PC_M1_125",
+      "kapanNo": "M-1-125",
+      "micron": "M-2",
+      "multPct": 27,
+      "padtar": 21852,
+      "polishCarat": 13.5,
+      "polishNang": 2400,
+      "rSize": "20.0000",
+      "rToPolishPct": 27,
+      "rWeight": 50,
+      "reAssort": "RA-1",
+      "reqWeightPct": 27,
+      "roughName": "try 000",
+      "rtPct": 93.33,
+      "s00": 5,
+      "s000": 5,
+      "s2": 15,
+      "s20": 10,
+      "s2minus": 20,
+      "s2plus": 80,
+      "s4": 35,
+      "s65": 30,
+      "shading": "S-2",
+      "status": "Approved",
+      "table4P": "80.0%",
+      "tableAssort": "OK",
+      "tableGlx": "OK",
+      "tableJama": "જમા",
+      "tableKhata": "OK",
+      "tableRT": "42.0%",
+      "tableReAssort": "OK",
+      "tableVigat": "",
+      "varPct": 0,
+      "vigat": "",
+      "weightFormula": "0.00 * 2770"
+    },
+    {
+      "assort": "A-1",
+      "cardSize": 98,
+      "date": "2026-07-29",
+      "fourPPct": 21.43,
+      "g1112": 0,
+      "g5a7": 0,
+      "g8a10b": 0,
+      "gNangFormula": "3500 * 65",
+      "gowttlb": 0,
+      "gtlblbdb": 0,
+      "gwhnw": 0,
+      "id": "PC_M1_126",
+      "kapanNo": "M-1-126",
+      "micron": "M-1",
+      "multPct": 26.67,
+      "padtar": 20750,
+      "polishCarat": 20,
+      "polishNang": 3500,
+      "rSize": "21.5000",
+      "rToPolishPct": 26.67,
+      "rWeight": 75,
+      "reAssort": "RA-2",
+      "reqWeightPct": 26.67,
+      "roughName": "lot 101",
+      "rtPct": 94.64,
+      "s00": 5,
+      "s000": 5,
+      "s2": 15,
+      "s20": 10,
+      "s2minus": 20,
+      "s2plus": 80,
+      "s4": 30,
+      "s65": 35,
+      "shading": "S-1",
+      "status": "Approved",
+      "table4P": "78.0%",
+      "tableAssort": "OK",
+      "tableGlx": "OK",
+      "tableJama": "જમા",
+      "tableKhata": "OK",
+      "tableRT": "45.0%",
+      "tableReAssort": "OK",
+      "tableVigat": "",
+      "varPct": 0,
+      "vigat": "",
+      "weightFormula": "0.00 * 2500"
+    },
+    {
+      "assort": "",
+      "cardSize": 18.22222222222222,
+      "date": "2026-08-04",
+      "flatPct": 0,
+      "fourPPct": 24.18,
+      "g1112": 0,
+      "g5a7": 0,
+      "g8a10b": 0,
+      "gNangFormula": "53300",
+      "glxPct": 0,
+      "gowttlb": 0,
+      "gtlblbdb": 0,
+      "gwhnw": 0,
+      "id": "PC1785832678882_jjqn",
+      "kapanNo": "M-1-131",
+      "manualPct": 0,
+      "micron": "",
+      "multPct": 0,
+      "outPct": 0,
+      "padtar": 3680,
+      "polishCarat": 45,
+      "polishNang": 820,
+      "rSize": "18.2222",
+      "rToPolishPct": 0,
+      "rWeight": 45,
+      "reAssort": "",
+      "reqWeightPct": 0,
+      "roughBhav": 2500,
+      "roughName": "lot 101",
+      "rtPct": 96.15,
+      "s00": 0,
+      "s000": 0,
+      "s2": 0,
+      "s20": 0,
+      "s2minus": 0,
+      "s2plus": 0,
+      "s4": 0,
+      "s65": 0,
+      "salePct": 0,
+      "shading": "",
+      "status": "Draft",
+      "tableAssort": "",
+      "tableGlx": "",
+      "tableJama": "",
+      "tableKhata": "",
+      "tablePoHead": "",
+      "tableRaOut": "",
+      "tableReAssort": "",
+      "tableRepairPct": "",
+      "tableVigat": "",
+      "varPct": 0,
+      "vigat": "ખાતા વિભાગમાં તળિયું/પહેલ કામ ચાલુ | [KHATA➔OK KAPAN (ઓકે કાપણ)]: OK",
+      "weightFormula": "112500"
+    },
+    {
+      "assort": "",
+      "cardSize": "41.24",
+      "date": "2026-08-04",
+      "flatPct": 0,
+      "fourPPct": 0,
+      "g1112": 0,
+      "g5a7": 0,
+      "g8a10b": 0,
+      "gNangFormula": "238160",
+      "glxPct": 0,
+      "gowttlb": 0,
+      "gtlblbdb": 0,
+      "gwhnw": 0,
+      "id": "PC1785840635751_238z",
+      "kapanNo": "m-2-20",
+      "manualPct": 0,
+      "micron": "",
+      "multPct": 32.83,
+      "outPct": 0,
+      "padtar": 14240,
+      "polishCarat": 29.54,
+      "polishNang": 3664,
+      "rSize": "40.72",
+      "rToPolishPct": 32.83,
+      "rWeight": 89.98,
+      "reAssort": "",
+      "reqWeightPct": 34.83,
+      "roughBhav": 2029,
+      "roughName": "hawa 75",
+      "rtPct": 0,
+      "s00": 0,
+      "s000": 0,
+      "s2": 0,
+      "s20": 0,
+      "s2minus": 0,
+      "s2plus": 0,
+      "s4": 0,
+      "s65": 0,
+      "salePct": 0,
+      "shading": "",
+      "status": "Draft",
+      "table4P": "0",
+      "tableAssort": "0",
+      "tableGlx": "0",
+      "tableJama": "0",
+      "tableKhata": "0",
+      "tablePoHead": "",
+      "tableRT": "0",
+      "tableRaOut": "",
+      "tableReAssort": "0",
+      "tableRepairPct": "",
+      "tableVigat": "",
+      "varPct": -2,
+      "vigat": "[Galaxy➔AP OK]: [Rough to Polish %: 34.83]  | [AP OK➔4P]: OK | [4P➔4P OK RT BAAKI]: OK | [4P OK RT BAAKI➔RT]: OK | [RT➔RT OK KHATA BAAKI]: OK | [RT OK KHATA BAAKI➔KHATA]: OK | [KHATA➔OK KAPAN (ઓકે કાપણ)]: OK",
+      "weightFormula": "89.98 * 2029"
+    }
+  ],
+  "prunedMockData_v4": true,
+  "roughLots": [
+    {
+      "carats": 1000,
+      "date": "2026-08-04T10:41:02.760Z",
+      "finalRoughAmt": 2029,
+      "flatPct": 0,
+      "flatRate": 0,
+      "galaxyPct": 0,
+      "id": "R1785840062760",
+      "manualPct": 0,
+      "name": "hawa 75",
+      "outPct": 0,
+      "outRate": 0,
+      "party": "vinubhai",
+      "rate": 2029,
+      "sale1Pct": 0,
+      "sale1Rate": 0,
+      "sale2Pct": 0,
+      "sale2Rate": 0,
+      "vigat": ""
+    },
+    {
+      "carats": 97.88,
+      "date": "2026-06-11T12:00:00Z",
+      "finalRoughAmt": 271128,
+      "id": "R_AL65",
+      "name": "try 000",
+      "party": "Anilbhai",
+      "rate": 2770,
+      "vigat": "AL 65 Rough"
+    },
+    {
+      "carats": 500,
+      "date": "2026-07-20T10:00:00Z",
+      "finalRoughAmt": 1250000,
+      "id": "R_LOT101",
+      "name": "lot 101",
+      "party": "Kiritbhai",
+      "rate": 2500,
+      "vigat": "Lot 101 Raw"
+    }
+  ],
+  "transferRules": [
+    {
+      "customHeader": "GLX Top Size",
+      "from": "Galaxy",
+      "isCompulsory": true,
+      "to": "4P"
+    },
+    {
+      "customHeader": "4P Output Carats",
+      "from": "4P",
+      "isCompulsory": true,
+      "to": "RT"
+    }
+  ],
+  "transfers": [
+    {
+      "carat": 29.54,
+      "fromDept": "KHATA",
+      "id": "TR1785840635750",
+      "kapanNo": "m-2-20",
+      "nang": 3664,
+      "prevCarat": 39.03,
+      "prevNang": 3693,
+      "timestamp": "2026-08-04T10:50:00.000Z",
+      "toDept": "OK KAPAN (ઓકે કાપણ)",
+      "vigat": ""
+    },
+    {
+      "carat": 39.03,
+      "fromDept": "RT OK KHATA BAAKI",
+      "id": "TR1785840611473",
+      "kapanNo": "m-2-20",
+      "nang": 3693,
+      "prevCarat": 39.03,
+      "prevNang": 3693,
+      "timestamp": "2026-08-04T10:49:00.000Z",
+      "toDept": "KHATA",
+      "vigat": ""
+    },
+    {
+      "carat": 39.03,
+      "fromDept": "RT",
+      "id": "TR1785840592265",
+      "kapanNo": "m-2-20",
+      "nang": 3693,
+      "prevCarat": 40.11,
+      "prevNang": 3693,
+      "timestamp": "2026-08-04T10:49:00.000Z",
+      "toDept": "RT OK KHATA BAAKI",
+      "vigat": ""
+    },
+    {
+      "carat": 40.11,
+      "fromDept": "4P OK RT BAAKI",
+      "id": "TR1785840566418",
+      "kapanNo": "m-2-20",
+      "nang": 3693,
+      "prevCarat": 40.11,
+      "prevNang": 3693,
+      "timestamp": "2026-08-04T10:49:00.000Z",
+      "toDept": "RT",
+      "vigat": ""
+    },
+    {
+      "carat": 40.11,
+      "fromDept": "4P",
+      "id": "TR1785840555999",
+      "kapanNo": "m-2-20",
+      "nang": 3693,
+      "prevCarat": 89.98,
+      "prevNang": 3711,
+      "timestamp": "2026-08-04T10:48:00.000Z",
+      "toDept": "4P OK RT BAAKI",
+      "vigat": ""
+    },
+    {
+      "carat": 89.98,
+      "fromDept": "AP OK",
+      "id": "TR1785840504816",
+      "kapanNo": "m-2-20",
+      "nang": 3711,
+      "prevCarat": 89.98,
+      "prevNang": 3711,
+      "timestamp": "2026-08-04T10:45:00.000Z",
+      "toDept": "4P",
+      "vigat": ""
+    },
+    {
+      "carat": 89.98,
+      "fromDept": "Galaxy",
+      "id": "TR1785840318178",
+      "kapanNo": "m-2-20",
+      "nang": 3711,
+      "prevCarat": 89.98,
+      "prevNang": 1299,
+      "timestamp": "2026-08-04T10:44:00.000Z",
+      "toDept": "AP OK",
+      "vigat": "[Rough to Polish %: 34.83] "
+    },
+    {
+      "carat": 45,
+      "fromDept": "KHATA",
+      "id": "TR1785832678881",
+      "kapanNo": "M-1-131",
+      "nang": 820,
+      "prevCarat": 45,
+      "prevNang": 820,
+      "timestamp": "2026-08-04T08:35:00.000Z",
+      "toDept": "OK KAPAN (ઓકે કાપણ)",
+      "vigat": ""
+    },
+    {
+      "carat": 55,
+      "fromDept": "Galaxy",
+      "id": "TR1785832536531",
+      "kapanNo": "M-1-127",
+      "nang": 5500,
+      "prevCarat": 60,
+      "prevNang": 1100,
+      "timestamp": "2026-08-04T08:35:00.000Z",
+      "toDept": "AP OK",
+      "vigat": ""
+    },
+    {
+      "carat": 97.88,
+      "fromDept": "Galaxy",
+      "id": "TR_M1_124_1",
+      "kapanNo": "M-1-124",
+      "nang": 1819,
+      "prevCarat": 97.88,
+      "prevNang": 1819,
+      "timestamp": "2026-06-06T00:00:00Z",
+      "toDept": "AP OK",
+      "vigat": "Galaxy completed"
+    },
+    {
+      "carat": 97.88,
+      "fromDept": "AP OK",
+      "id": "TR_M1_124_2",
+      "kapanNo": "M-1-124",
+      "nang": 1819,
+      "prevCarat": 97.88,
+      "prevNang": 1819,
+      "timestamp": "2026-06-06T12:00:00Z",
+      "toDept": "4P",
+      "vigat": "Assortment planning done"
+    },
+    {
+      "carat": 36.49,
+      "fromDept": "4P",
+      "id": "TR_M1_124_3",
+      "kapanNo": "M-1-124",
+      "nang": 4605,
+      "prevCarat": 97.88,
+      "prevNang": 1819,
+      "timestamp": "2026-06-08T12:00:00Z",
+      "toDept": "RT",
+      "vigat": "4P laser done"
+    },
+    {
+      "carat": 35,
+      "fromDept": "RT",
+      "id": "TR_M1_124_4",
+      "kapanNo": "M-1-124",
+      "nang": 4605,
+      "prevCarat": 36.49,
+      "prevNang": 4605,
+      "timestamp": "2026-06-09T12:00:00Z",
+      "toDept": "KHATA",
+      "vigat": "Girdle & table prepped"
+    },
+    {
+      "carat": 25.34,
+      "fromDept": "KHATA",
+      "id": "TR_M1_124_5",
+      "kapanNo": "M-1-124",
+      "nang": 4664,
+      "prevCarat": 35,
+      "prevNang": 4605,
+      "timestamp": "2026-06-11T07:12:00Z",
+      "toDept": "OK KAPAN (ઓકે કાપણ)",
+      "vigat": "Polished and completed"
+    },
+    {
+      "carat": 50,
+      "fromDept": "Galaxy",
+      "id": "TR_M1_125_1",
+      "kapanNo": "M-1-125",
+      "nang": 2400,
+      "prevCarat": 50,
+      "prevNang": 2400,
+      "timestamp": "2026-06-11T10:00:00Z",
+      "toDept": "AP OK",
+      "vigat": "Galaxy ok"
+    },
+    {
+      "carat": 50,
+      "fromDept": "AP OK",
+      "id": "TR_M1_125_2",
+      "kapanNo": "M-1-125",
+      "nang": 2400,
+      "prevCarat": 50,
+      "prevNang": 2400,
+      "timestamp": "2026-06-12T11:00:00Z",
+      "toDept": "4P",
+      "vigat": "AP ok"
+    },
+    {
+      "carat": 19.5,
+      "fromDept": "4P",
+      "id": "TR_M1_125_3",
+      "kapanNo": "M-1-125",
+      "nang": 2380,
+      "prevCarat": 50,
+      "prevNang": 2400,
+      "timestamp": "2026-06-14T15:00:00Z",
+      "toDept": "RT",
+      "vigat": "4p ok"
+    },
+    {
+      "carat": 18.2,
+      "fromDept": "RT",
+      "id": "TR_M1_125_4",
+      "kapanNo": "M-1-125",
+      "nang": 2380,
+      "prevCarat": 19.5,
+      "prevNang": 2380,
+      "timestamp": "2026-06-16T12:00:00Z",
+      "toDept": "KHATA",
+      "vigat": "rt ok"
+    },
+    {
+      "carat": 13.5,
+      "fromDept": "KHATA",
+      "id": "TR_M1_125_5",
+      "kapanNo": "M-1-125",
+      "nang": 2400,
+      "prevCarat": 18.2,
+      "prevNang": 2380,
+      "timestamp": "2026-06-18T14:30:00Z",
+      "toDept": "OK KAPAN (ઓકે કાપણ)",
+      "vigat": "Completed"
+    },
+    {
+      "carat": 75,
+      "fromDept": "Galaxy",
+      "id": "TR_M1_126_1",
+      "kapanNo": "M-1-126",
+      "nang": 3500,
+      "prevCarat": 75,
+      "prevNang": 3500,
+      "timestamp": "2026-07-22T10:00:00Z",
+      "toDept": "AP OK",
+      "vigat": "Galaxy ok"
+    },
+    {
+      "carat": 75,
+      "fromDept": "AP OK",
+      "id": "TR_M1_126_2",
+      "kapanNo": "M-1-126",
+      "nang": 3500,
+      "prevCarat": 75,
+      "prevNang": 3500,
+      "timestamp": "2026-07-23T11:00:00Z",
+      "toDept": "4P",
+      "vigat": "AP ok"
+    },
+    {
+      "carat": 28,
+      "fromDept": "4P",
+      "id": "TR_M1_126_3",
+      "kapanNo": "M-1-126",
+      "nang": 3400,
+      "prevCarat": 75,
+      "prevNang": 3500,
+      "timestamp": "2026-07-25T12:00:00Z",
+      "toDept": "RT",
+      "vigat": "4p ok"
+    },
+    {
+      "carat": 26.5,
+      "fromDept": "RT",
+      "id": "TR_M1_126_4",
+      "kapanNo": "M-1-126",
+      "nang": 3400,
+      "prevCarat": 28,
+      "prevNang": 3400,
+      "timestamp": "2026-07-27T10:00:00Z",
+      "toDept": "KHATA",
+      "vigat": "rt ok"
+    },
+    {
+      "carat": 20,
+      "fromDept": "KHATA",
+      "id": "TR_M1_126_5",
+      "kapanNo": "M-1-126",
+      "nang": 3500,
+      "prevCarat": 26.5,
+      "prevNang": 3400,
+      "timestamp": "2026-07-29T10:15:00Z",
+      "toDept": "OK KAPAN (ઓકે કાપણ)",
+      "vigat": "Completed"
+    }
+  ]
+}
