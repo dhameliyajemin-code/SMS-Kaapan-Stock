@@ -817,12 +817,7 @@
       state.prunedMockData_v6 = true;
     }
 
-    if (state.roughLots.length === 0) {
-      state.roughLots = [
-        { id: "R_AL65", name: "try 000", party: "Anilbhai", carats: 97.88, rate: 2770, finalRoughAmt: 271128, vigat: "AL 65 Rough", date: "2026-06-11T12:00:00Z" },
-        { id: "R_LOT101", name: "lot 101", party: "Kiritbhai", carats: 500.00, rate: 2500, finalRoughAmt: 1250000, vigat: "Lot 101 Raw", date: "2026-07-20T10:00:00Z" }
-      ];
-    }
+
     if (state.kapans.length === 0) {
       // (This fallback is safe, already handled by prunedMockData_v4 check)
     }
