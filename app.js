@@ -99,7 +99,13 @@
     // Scenario B: In progress
     else {
       const makeableSizeVal = k.makeableSize || (k.makeablePiece ? k.makeableVajan / k.makeablePiece : 0);
-      const expectedCt = k.poCt || (k.roughWeight ? k.roughWeight * (k.r2pPct || 14.95) / 100 : k.carat * 0.1495);
+      const linked = rough ? (state.kapans || []).filter(x => x.roughId === rough.id) : [];
+      const kapansWithYield = linked.filter(x => Number(x.r2pPct || 0) > 0);
+      const avgYield = kapansWithYield.length > 0
+        ? kapansWithYield.reduce((sum, x) => sum + Number(x.r2pPct), 0) / kapansWithYield.length
+        : 0;
+      const yieldPct = Number(k.r2pPct || 0) > 0 ? Number(k.r2pPct) : avgYield;
+      const expectedCt = k.poCt || (yieldPct > 0 ? (k.roughWeight || k.carat || 0) * yieldPct / 100 : 0);
 
       resultBox.innerHTML = `
         <div style="background:#f8fafc; border:1.5px solid #cbd5e1; border-radius:10px; padding:18px; text-align: left; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);">
@@ -1207,7 +1213,7 @@
     state.roughLots.forEach(r => {
       const purchased = Number(r.carats || 0);
       const linked = (state.kapans || []).filter(k => k.roughId === r.id);
-      const manufactured = linked.reduce((sum, k) => sum + Number(k.carat || 0), 0);
+      const manufactured = linked.reduce((sum, k) => sum + Number(k.roughWeight || k.carat || 0), 0);
       
       const polish = linked
         .filter(k => k.currentDept === "OK KAPAN (ઓકે કાપણ)")
@@ -1217,7 +1223,18 @@
         .filter(k => k.currentDept !== "OK KAPAN (ઓકે કાપણ)")
         .reduce((sum, k) => sum + Number(k.carat || 0), 0);
       
-      const expected = pipeline * 0.43;
+      const kapansWithYield = linked.filter(k => Number(k.r2pPct || 0) > 0);
+      const avgYield = kapansWithYield.length > 0
+        ? kapansWithYield.reduce((sum, k) => sum + Number(k.r2pPct), 0) / kapansWithYield.length
+        : 0;
+
+      const expected = linked
+        .filter(k => k.currentDept !== "OK KAPAN (ઓકે કાપણ)")
+        .reduce((sum, k) => {
+          const w = Number(k.roughWeight || k.carat || 0);
+          const yieldPct = Number(k.r2pPct || 0) > 0 ? Number(k.r2pPct) : avgYield;
+          return sum + (w * yieldPct / 100);
+        }, 0);
 
       grandPurchased += purchased;
       grandManufactured += manufactured;
@@ -1258,14 +1275,26 @@
         tbody.innerHTML = filteredRoughs.map(r => {
           const purchased = Number(r.carats || 0);
           const linked = (state.kapans || []).filter(k => k.roughId === r.id);
-          const manufactured = linked.reduce((sum, k) => sum + Number(k.carat || 0), 0);
+          const manufactured = linked.reduce((sum, k) => sum + Number(k.roughWeight || k.carat || 0), 0);
           const polish = linked
             .filter(k => k.currentDept === "OK KAPAN (ઓકે કાપણ)")
             .reduce((sum, k) => sum + Number(k.carat || 0), 0);
           const pipeline = linked
             .filter(k => k.currentDept !== "OK KAPAN (ઓકે કાપણ)")
             .reduce((sum, k) => sum + Number(k.carat || 0), 0);
-          const expected = pipeline * 0.43;
+          
+          const kapansWithYield = linked.filter(k => Number(k.r2pPct || 0) > 0);
+          const avgYield = kapansWithYield.length > 0
+            ? kapansWithYield.reduce((sum, k) => sum + Number(k.r2pPct), 0) / kapansWithYield.length
+            : 0;
+
+          const expected = linked
+            .filter(k => k.currentDept !== "OK KAPAN (ઓકે કાપણ)")
+            .reduce((sum, k) => {
+              const w = Number(k.roughWeight || k.carat || 0);
+              const yieldPct = Number(k.r2pPct || 0) > 0 ? Number(k.r2pPct) : avgYield;
+              return sum + (w * yieldPct / 100);
+            }, 0);
 
           const detailsHtml = (r.finalRoughAmt || r.sale1Pct || r.sale2Pct || r.flatPct || r.manualPct || r.galaxyPct || r.outPct) ? `
             <details style="font-size: 11px; color: #475569; margin-top: 4px; cursor: pointer; text-align: left;">
