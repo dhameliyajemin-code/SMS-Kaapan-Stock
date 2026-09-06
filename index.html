@@ -9,7 +9,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js" crossorigin="anonymous"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Hind+Vadodara:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Hind+Vadodara:wght@400;500;600;700&family=Noto+Color+Emoji&display=swap" rel="stylesheet">
 <!-- HTML2CANVAS LIBRARY FOR IMAGE SAVING & SHARING -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
@@ -146,6 +146,7 @@
       </div>
     </div>
     <div class="top-user-controls" style="display: flex; align-items: center; gap: 10px; font-size: 12.5px;">
+      <span id="cloudSyncStatusBadge" style="font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 700; border: 1px solid #cbd5e1; background: #f8fafc; color: #64748b; transition: all 0.3s ease;">⚪ કનેક્ટ થઈ રહ્યું છે...</span>
       <span>👤 <b id="displayUser">Stock</b></span>
       <button onclick="logout()" style="background: var(--danger); font-weight: 700; border: none; color: #fff; padding: 4px 10px; border-radius: var(--radius-sm); cursor: pointer; font-size: 12px; transition: all 0.2s;">🔒 લોગઆઉટ</button>
     </div>
@@ -184,7 +185,6 @@
             </thead>
             <tbody id="adminSummaryTableBody"></tbody>
           </table>
-          ${getActiveRepairsHtml(pc.kapanNo)}
         </div>
       </div>
 
@@ -1676,6 +1676,6 @@
   </div>
 </div>
 
-  <script src="app.js?v=2.6"></script>
+  <script src="app.js?v=2.7"></script>
 </body>
 </html>

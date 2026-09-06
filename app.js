@@ -482,6 +482,36 @@
   }
 
   let dbRef = null;
+  let isFirebaseSynced = false;
+  let syncPending = false;
+  let isSyncing = false;
+
+  function updateCloudSyncBadge(status, text) {
+    const badge = document.getElementById("cloudSyncStatusBadge");
+    if (!badge) return;
+    if (status === "synced") {
+      badge.innerHTML = "🟢 " + (text || "ક્લાઉડ સિન્ક (Synced)");
+      badge.style.color = "#15803d";
+      badge.style.borderColor = "#86efac";
+      badge.style.background = "#f0fdf4";
+    } else if (status === "syncing") {
+      badge.innerHTML = "🟡 " + (text || "સિન્ક થાય છે (Syncing...)");
+      badge.style.color = "#a16207";
+      badge.style.borderColor = "#fde047";
+      badge.style.background = "#fefce8";
+    } else if (status === "error") {
+      badge.innerHTML = "🔴 " + (text || "સિન્ક એરર (Sync Error)");
+      badge.style.color = "#b91c1c";
+      badge.style.borderColor = "#fca5a5";
+      badge.style.background = "#fef2f2";
+    } else if (status === "connecting") {
+      badge.innerHTML = "⚪ " + (text || "કનેક્ટ થઈ રહ્યું છે...");
+      badge.style.color = "#64748b";
+      badge.style.borderColor = "#cbd5e1";
+      badge.style.background = "#f8fafc";
+    }
+  }
+
   function initFirebase() {
     const config = state.firebaseConfig;
     if (config && config.apiKey && config.dbUrl && config.projectId) {
@@ -493,46 +523,54 @@
         };
         if (!window.firebase) {
           console.warn("Firebase SDK not loaded yet.");
+          updateCloudSyncBadge("error", "Firebase SDK નથી");
           return;
         }
         if (!firebase.apps.length) {
           firebase.initializeApp(firebaseConfig);
         }
         dbRef = firebase.database().ref("diamond_stock_system");
-        
-        // One-time overwrite to wipe old remote Firebase database entries and start clean
-        if (!state.firebaseWiped) {
-          dbRef.set(state).then(() => {
-            state.firebaseWiped = true;
-            saveState();
-            console.log("Firebase wiped clean and initialized with fresh schema.");
-          }).catch(err => {
-            console.warn("Firebase initial wipe failed (rules might prevent write):", err);
-          });
-        } else {
-          // Listen for updates and download from Firebase
-          dbRef.once("value").then((snapshot) => {
-            const val = snapshot.val();
-            if (val) {
-              state = val;
-              state.auth = ensureAuthHashesSync(state.auth);
-              if (!state.kapans) state.kapans = [];
-              if (!state.roughLots) state.roughLots = [];
-              if (!state.transfers) state.transfers = [];
-              if (!state.repairs) state.repairs = [];
-              if (!state.audits) state.audits = [];
-              if (!state.polishCharts) state.polishCharts = [];
-              if (!state.deptConfigs) state.deptConfigs = {};
-              saveState();
-              renderAll();
-            }
-          }).catch(err => {
-            console.warn("Firebase initial read failed:", err);
-          });
-        }
+        updateCloudSyncBadge("connecting");
+
+        // Listen for updates and download from Firebase
+        dbRef.once("value").then((snapshot) => {
+          const val = snapshot.val();
+          if (val) {
+            state = val;
+            state.auth = ensureAuthHashesSync(state.auth);
+            if (!state.kapans) state.kapans = [];
+            if (!state.roughLots) state.roughLots = [];
+            if (!state.transfers) state.transfers = [];
+            if (!state.repairs) state.repairs = [];
+            if (!state.audits) state.audits = [];
+            if (!state.polishCharts) state.polishCharts = [];
+            if (!state.deptConfigs) state.deptConfigs = {};
+            isFirebaseSynced = true;
+            saveStateLocally();
+            renderAll();
+            updateCloudSyncBadge("synced");
+            console.log("Firebase initial data loaded successfully.");
+          } else {
+            // Database is completely empty, initialize it with current local state
+            isFirebaseSynced = true;
+            syncToFirebase();
+            updateCloudSyncBadge("synced");
+            console.log("Firebase database was empty. Initialized with local state.");
+          }
+
+          if (syncPending) {
+            syncPending = false;
+            syncToFirebase();
+          }
+        }).catch(err => {
+          console.warn("Firebase initial read failed:", err);
+          isFirebaseSynced = true;
+          updateCloudSyncBadge("error", "કનેક્શન એરર");
+        });
 
         // Listen for live changes with error handler
         dbRef.on("value", (snapshot) => {
+          if (isSyncing) return;
           const val = snapshot.val();
           if (val && JSON.stringify(val) !== JSON.stringify(state)) {
             state = val;
@@ -544,22 +582,45 @@
             if (!state.audits) state.audits = [];
             if (!state.polishCharts) state.polishCharts = [];
             if (!state.deptConfigs) state.deptConfigs = {};
-            saveState();
+            isFirebaseSynced = true;
+            saveStateLocally();
             renderAll();
+            updateCloudSyncBadge("synced");
           }
         }, (error) => {
           console.warn("Firebase live update listener cancelled (check rules):", error);
+          updateCloudSyncBadge("error", "લાઇવ સિન્ક બંધ");
         });
       } catch (e) {
         console.error("Firebase init failed:", e);
+        isFirebaseSynced = true;
+        updateCloudSyncBadge("error", "સિન્ક એરર");
       }
+    } else {
+      isFirebaseSynced = true;
+      updateCloudSyncBadge("error", "કોન્ફિગ નથી");
     }
   }
 
   function syncToFirebase() {
-    if (dbRef) {
-      dbRef.set(state).catch(e => console.error("Firebase sync error:", e));
+    if (!dbRef || !isFirebaseSynced) {
+      syncPending = true;
+      updateCloudSyncBadge("syncing", "કનેક્ટ થવાની રાહ જુએ છે...");
+      return;
     }
+    updateCloudSyncBadge("syncing");
+    isSyncing = true;
+    dbRef.set(state)
+      .then(() => {
+        isSyncing = false;
+        syncPending = false;
+        updateCloudSyncBadge("synced");
+      })
+      .catch(e => {
+        isSyncing = false;
+        console.error("Firebase sync error:", e);
+        updateCloudSyncBadge("error", "સિન્ક નિષ્ફળ");
+      });
   }
 
   function loadState() {
@@ -634,9 +695,16 @@
         // Ensure password hashes are present
         state.auth = ensureAuthHashesSync(state.auth);
 
+        // Purge any stale mock kapans from old local cache if present
+        if (Array.isArray(state.kapans) && state.kapans.some(k => k && k.kapanNo === "M-1-124")) {
+          state.kapans = state.kapans.filter(k => k && !k.kapanNo.startsWith("M-1-"));
+          state.transfers = (state.transfers || []).filter(t => t && !t.kapanNo.startsWith("M-1-"));
+          state.polishCharts = (state.polishCharts || []).filter(pc => pc && !pc.kapanNo.startsWith("M-1-"));
+          state.roughLots = (state.roughLots || []).filter(r => r && r.id !== "R_AL65" && r.id !== "R_LOT101");
+        }
+
         // Save migrated state back
         safeStorage.setItem("diamond_stock_state_v7", JSON.stringify(state));
-        initFirebase();
       } catch(e) { 
         console.error("Load error", e); 
       }
@@ -645,12 +713,13 @@
       state.deptConfigs = JSON.parse(JSON.stringify(DEFAULT_DEPT_CONFIGS));
       state.autoLogoutHours = 11;
       state.firebaseConfig = { apiKey: "AIzaSyDvu7pJMXatKNHFAuJMtsh_zpmb8Jr0BCM", dbUrl: "https://ng-cost-default-rtdb.firebaseio.com", projectId: "ng-cost" };
-      state.firebaseWiped = false;
+      state.firebaseWiped = true;
+      state.prunedMockData_v6 = true;
     }
     initFirebase();
   }
 
-  function saveState() {
+  function saveStateLocally() {
     if (!state.deptConfigs) state.deptConfigs = {};
     state.depts = [...DEPTS];
     DEPTS.forEach(d => {
@@ -659,177 +728,27 @@
       }
     });
     safeStorage.setItem("diamond_stock_state_v7", JSON.stringify(state));
+  }
+
+  function saveState() {
+    saveStateLocally();
     syncToFirebase();
   }
 
   function checkInitialData() {
-    // Run cleanup of old mock data EXACTLY ONCE to protect future live entries
-    if (!state.prunedMockData_v6) {
-      state.roughLots = [
-        { id: "R_AL65", name: "try 000", party: "Anilbhai", carats: 97.88, rate: 2770, finalRoughAmt: 271128, vigat: "AL 65 Rough", date: "2026-06-11T12:00:00Z" },
-        { id: "R_LOT101", name: "lot 101", party: "Kiritbhai", carats: 500.00, rate: 2500, finalRoughAmt: 1250000, vigat: "Lot 101 Raw", date: "2026-07-20T10:00:00Z" }
-      ];
+    if (!state.kapans) state.kapans = [];
+    if (!state.roughLots) state.roughLots = [];
+    if (!state.transfers) state.transfers = [];
+    if (!state.repairs) state.repairs = [];
+    if (!state.audits) state.audits = [];
+    if (!state.polishCharts) state.polishCharts = [];
+    if (!state.transferRules) state.transferRules = [
+      { from: "Galaxy", to: "AP OK", customHeader: "Rough to Polish %", isCompulsory: true },
+      { from: "4P", to: "RT", customHeader: "4P Output Carats", isCompulsory: true }
+    ];
+    state.prunedMockData_v6 = true;
+    state.firebaseWiped = true;
 
-      state.kapans = [
-        { 
-          id: "K_M1_124", kapanNo: "M-1-124", roughId: "R_AL65", carat: 25.34, nang: 4664, roughWeight: 97.88, roughNang: 1819,
-          currentDept: "OK KAPAN (ઓકે કાપણ)", tag: "Regular", status: "Completed", vigat: "ઓકે કાપણ", 
-          vehicleTracking: "", createdDate: "2026-06-04T12:00:00Z", lastMovedDate: "2026-06-11T07:12:00Z",
-          makeablePiece: 4636, makeableVajan: 27.86, fourPNang: 4605, fourPCt: 36.49, rtNang: 4605,
-          rtCt: 35.00, rtPct: 95.92, fourPPct: 23.65, r2pPct: 28.47
-        },
-        { 
-          id: "K_M1_125", kapanNo: "M-1-125", roughId: "R_AL65", carat: 13.50, nang: 2400, roughWeight: 50.00, roughNang: 2400,
-          currentDept: "OK KAPAN (ઓકે કાપણ)", tag: "Urgent", status: "Completed", vigat: "ડેમો કાપણ ૨", 
-          vehicleTracking: "", createdDate: "2026-06-10T09:00:00Z", lastMovedDate: "2026-06-18T14:30:00Z",
-          makeablePiece: 2400, makeableVajan: 15.00, fourPNang: 2380, fourPCt: 19.50, rtNang: 2380,
-          rtCt: 18.20, rtPct: 93.33, fourPPct: 23.08, r2pPct: 27.00
-        },
-        { 
-          id: "K_M1_126", kapanNo: "M-1-126", roughId: "R_LOT101", carat: 20.00, nang: 3500, roughWeight: 75.00, roughNang: 3500,
-          currentDept: "OK KAPAN (ઓકે કાપણ)", tag: "Regular", status: "Completed", vigat: "ડેમો કાપણ ૩", 
-          vehicleTracking: "", createdDate: "2026-07-21T08:00:00Z", lastMovedDate: "2026-07-29T10:15:00Z",
-          makeablePiece: 3450, makeableVajan: 22.00, fourPNang: 3400, fourPCt: 28.00, rtNang: 3400,
-          rtCt: 26.50, rtPct: 94.64, fourPPct: 21.43, r2pPct: 26.67
-        },
-        { 
-          id: "K_M1_127", kapanNo: "M-1-127", roughId: "R_LOT101", carat: 60.00, nang: 1100, roughWeight: 60.00, roughNang: 1100,
-          currentDept: "Galaxy", tag: "Regular", status: "Chalu", vigat: "ગેલેક્ષી પ્રોસેસ ચાલુ", 
-          vehicleTracking: "", createdDate: "2026-07-22T10:00:00Z", lastMovedDate: "2026-07-22T10:00:00Z"
-        },
-        { 
-          id: "K_M1_128", kapanNo: "M-1-128", roughId: "R_LOT101", carat: 40.00, nang: 800, roughWeight: 40.00, roughNang: 800,
-          currentDept: "AP OK", tag: "Sample", status: "Chalu", vigat: "એસોસોર્ટમેન્ટ પ્લાનિંગ ઓકે", 
-          vehicleTracking: "", createdDate: "2026-07-23T11:00:00Z", lastMovedDate: "2026-07-24T12:00:00Z"
-        },
-        { 
-          id: "K_M1_129", kapanNo: "M-1-129", roughId: "R_LOT101", carat: 80.00, nang: 1500, roughWeight: 80.00, roughNang: 1500,
-          currentDept: "4P", tag: "Regular", status: "Chalu", vigat: "4P લેસર ચાલુ", 
-          vehicleTracking: "", createdDate: "2026-07-24T09:00:00Z", lastMovedDate: "2026-07-26T15:00:00Z",
-          makeablePiece: 1480, makeableVajan: 25.00
-        },
-        { 
-          id: "K_M1_130", kapanNo: "M-1-130", roughId: "R_AL65", carat: 55.00, nang: 950, roughWeight: 55.00, roughNang: 950,
-          currentDept: "RT", tag: "Urgent", status: "Chalu", vigat: "RT ગર્ડલ બ્રુટિંગ", 
-          vehicleTracking: "", createdDate: "2026-07-25T14:00:00Z", lastMovedDate: "2026-07-28T09:30:00Z",
-          makeablePiece: 940, makeableVajan: 16.50, fourPNang: 935, fourPCt: 22.10, fourPPct: 25.34
-        },
-        { 
-          id: "K_M1_131", kapanNo: "M-1-131", roughId: "R_LOT101", carat: 45.00, nang: 820, roughWeight: 45.00, roughNang: 820,
-          currentDept: "KHATA", tag: "Regular", status: "Chalu", vigat: "ખાતા વિભાગમાં તળિયું/પહેલ કામ ચાલુ", 
-          vehicleTracking: "", createdDate: "2026-07-26T10:30:00Z", lastMovedDate: "2026-07-30T11:00:00Z",
-          makeablePiece: 810, makeableVajan: 13.80, fourPNang: 805, fourPCt: 18.20, fourPPct: 24.18,
-          rtNang: 805, rtCt: 17.50, rtPct: 96.15
-        },
-        { 
-          id: "K_M1_132", kapanNo: "M-1-132", roughId: "R_AL65", carat: 29.00, nang: 3470, roughWeight: 90.00, roughNang: 1700,
-          currentDept: "OK KAPAN (ઓકે કાપણ)", tag: "Regular", status: "Completed", vigat: "try 000", 
-          vehicleTracking: "", createdDate: "2026-07-27T08:00:00Z", lastMovedDate: "2026-07-27T15:00:00Z",
-          makeablePiece: 3500, makeableVajan: 31.50, fourPNang: 3490, fourPCt: 39.50, rtNang: 3490,
-          rtCt: 38.50, rtPct: 97.47, fourPPct: 20.25, r2pPct: 35.00, roughRate: 2029
-        },
-        { 
-          id: "K_M1_133", kapanNo: "M-1-133", roughId: "R_LOT101", carat: 70.00, nang: 1300, roughWeight: 70.00, roughNang: 1300,
-          currentDept: "4P", tag: "Sample", status: "Chalu", vigat: "4P લેસર કટિંગ ચાલુ", 
-          vehicleTracking: "", createdDate: "2026-07-28T16:00:00Z", lastMovedDate: "2026-07-29T10:00:00Z",
-          makeablePiece: 1290, makeableVajan: 21.00
-        }
-      ];
-
-      state.polishCharts = [
-        {
-          id: "PC_M1_124", kapanNo: "M-1-124", roughName: "try 000", date: "2026-06-11", status: "Approved",
-          assort: "A-1", reAssort: "RA-1", micron: "M-1", shading: "S-1",
-          tableAssort: "OK", tableGlx: "OK", table4P: "79.5%", tableRT: "43.4%",
-          tableReAssort: "OK", tableKhata: "OK", tableJama: "જમા", tableVigat: "",
-          rWeight: 97.88, rSize: "18.5839", cardSize: 126.20,
-          reqWeightPct: 28.47, fourPPct: 23.65, rtPct: 95.92,
-          multPct: 25.89, rToPolishPct: 25.89, varPct: -2.58,
-          weightFormula: "-2.53 * 2770", gNangFormula: "4664 * 65",
-          polishNang: 4664, polishCarat: 25.34, padtar: 22663,
-          s65: 33.0, s4: 34.0, s2: 12.0, s20: 14.0, s00: 2.0, s000: 5.0, s2plus: 79.0, s2minus: 21.0,
-          g5a7: 0, g8a10b: 0, g1112: 0, gwhnw: 0, gowttlb: 0, gtlblbdb: 0, vigat: ""
-        },
-        {
-          id: "PC_M1_125", kapanNo: "M-1-125", roughName: "try 000", date: "2026-06-18", status: "Approved",
-          assort: "A-2", reAssort: "RA-1", micron: "M-2", shading: "S-2",
-          tableAssort: "OK", tableGlx: "OK", table4P: "80.0%", tableRT: "42.0%",
-          tableReAssort: "OK", tableKhata: "OK", tableJama: "જમા", tableVigat: "",
-          rWeight: 50.00, rSize: "20.0000", cardSize: 65.00,
-          reqWeightPct: 27.00, fourPPct: 23.08, rtPct: 93.33,
-          multPct: 27.00, rToPolishPct: 27.00, varPct: 0.00,
-          weightFormula: "0.00 * 2770", gNangFormula: "2400 * 65",
-          polishNang: 2400, polishCarat: 13.50, padtar: 21852,
-          s65: 30.0, s4: 35.0, s2: 15.0, s20: 10.0, s00: 5.0, s000: 5.0, s2plus: 80.0, s2minus: 20.0,
-          g5a7: 0, g8a10b: 0, g1112: 0, gwhnw: 0, gowttlb: 0, gtlblbdb: 0, vigat: ""
-        },
-        {
-          id: "PC_M1_126", kapanNo: "M-1-126", roughName: "lot 101", date: "2026-07-29", status: "Approved",
-          assort: "A-1", reAssort: "RA-2", micron: "M-1", shading: "S-1",
-          tableAssort: "OK", tableGlx: "OK", table4P: "78.0%", tableRT: "45.0%",
-          tableReAssort: "OK", tableKhata: "OK", tableJama: "જમા", tableVigat: "",
-          rWeight: 75.00, rSize: "21.5000", cardSize: 98.00,
-          reqWeightPct: 26.67, fourPPct: 21.43, rtPct: 94.64,
-          multPct: 26.67, rToPolishPct: 26.67, varPct: 0.00,
-          weightFormula: "0.00 * 2500", gNangFormula: "3500 * 65",
-          polishNang: 3500, polishCarat: 20.00, padtar: 20750,
-          s65: 35.0, s4: 30.0, s2: 15.0, s20: 10.0, s00: 5.0, s000: 5.0, s2plus: 80.0, s2minus: 20.0,
-          g5a7: 0, g8a10b: 0, g1112: 0, gwhnw: 0, gowttlb: 0, gtlblbdb: 0, vigat: ""
-        },
-        {
-          id: "PC_M1_132", kapanNo: "M-1-132", roughName: "try 000", date: "2026-07-27", status: "Approved",
-          assort: "A-1", reAssort: "RA-1", micron: "M-1", shading: "S-1",
-          tableAssort: "OK", tableGlx: "OK", table4P: "79.5%", tableRT: "43.4%",
-          tableReAssort: "OK", tableKhata: "OK", tableJama: "જમા", tableVigat: "",
-          rWeight: 90.00, rSize: "18.8889", cardSize: 111.11,
-          reqWeightPct: 35.00, fourPPct: 20.25, rtPct: 97.47,
-          multPct: 35.00, rToPolishPct: 32.22, varPct: -2.78,
-          weightFormula: "2.50 * 2029", gNangFormula: "3470 * 65",
-          polishNang: 3470, polishCarat: 29.00, padtar: 14080,
-          s65: 33.0, s4: 34.0, s2: 12.0, s20: 14.0, s00: 2.0, s000: 5.0, s2plus: 79.0, s2minus: 21.0,
-          g5a7: 0, g8a10b: 0, g1112: 0, gwhnw: 0, gowttlb: 0, gtlblbdb: 0, vigat: ""
-        }
-      ];
-
-      state.transfers = [
-        { id: "TR_M1_124_1", kapanNo: "M-1-124", fromDept: "Galaxy", toDept: "AP OK", prevCarat: 97.88, prevNang: 1819, carat: 97.88, nang: 1819, vigat: "Galaxy completed", timestamp: "2026-06-06T00:00:00Z" },
-        { id: "TR_M1_124_2", kapanNo: "M-1-124", fromDept: "AP OK", toDept: "4P", prevCarat: 97.88, prevNang: 1819, carat: 97.88, nang: 1819, vigat: "Assortment planning done", timestamp: "2026-06-06T12:00:00Z" },
-        { id: "TR_M1_124_3", kapanNo: "M-1-124", fromDept: "4P", toDept: "RT", prevCarat: 97.88, prevNang: 1819, carat: 36.49, nang: 4605, vigat: "4P laser done", timestamp: "2026-06-08T12:00:00Z" },
-        { id: "TR_M1_124_4", kapanNo: "M-1-124", fromDept: "RT", toDept: "KHATA", prevCarat: 36.49, prevNang: 4605, carat: 35.00, nang: 4605, vigat: "Girdle & table prepped", timestamp: "2026-06-09T12:00:00Z" },
-        { id: "TR_M1_124_5", kapanNo: "M-1-124", fromDept: "KHATA", toDept: "OK KAPAN (ઓકે કાપણ)", prevCarat: 35.00, prevNang: 4605, carat: 25.34, nang: 4664, vigat: "Polished and completed", timestamp: "2026-06-11T07:12:00Z" },
-
-        { id: "TR_M1_125_1", kapanNo: "M-1-125", fromDept: "Galaxy", toDept: "AP OK", prevCarat: 50.00, prevNang: 2400, carat: 50.00, nang: 2400, vigat: "Galaxy ok", timestamp: "2026-06-11T10:00:00Z" },
-        { id: "TR_M1_125_2", kapanNo: "M-1-125", fromDept: "AP OK", toDept: "4P", prevCarat: 50.00, prevNang: 2400, carat: 50.00, nang: 2400, vigat: "AP ok", timestamp: "2026-06-12T11:00:00Z" },
-        { id: "TR_M1_125_3", kapanNo: "M-1-125", fromDept: "4P", toDept: "RT", prevCarat: 50.00, prevNang: 2400, carat: 19.50, nang: 2380, vigat: "4p ok", timestamp: "2026-06-14T15:00:00Z" },
-        { id: "TR_M1_125_4", kapanNo: "M-1-125", fromDept: "RT", toDept: "KHATA", prevCarat: 19.50, prevNang: 2380, carat: 18.20, nang: 2380, vigat: "rt ok", timestamp: "2026-06-16T12:00:00Z" },
-        { id: "TR_M1_125_5", kapanNo: "M-1-125", fromDept: "KHATA", toDept: "OK KAPAN (ઓકે કાપણ)", prevCarat: 18.20, prevNang: 2380, carat: 13.50, nang: 2400, vigat: "Completed", timestamp: "2026-06-18T14:30:00Z" },
-
-        { id: "TR_M1_126_1", kapanNo: "M-1-126", fromDept: "Galaxy", toDept: "AP OK", prevCarat: 75.00, prevNang: 3500, carat: 75.00, nang: 3500, vigat: "Galaxy ok", timestamp: "2026-07-22T10:00:00Z" },
-        { id: "TR_M1_126_2", kapanNo: "M-1-126", fromDept: "AP OK", toDept: "4P", prevCarat: 75.00, prevNang: 3500, carat: 75.00, nang: 3500, vigat: "AP ok", timestamp: "2026-07-23T11:00:00Z" },
-        { id: "TR_M1_126_3", kapanNo: "M-1-126", fromDept: "4P", toDept: "RT", prevCarat: 75.00, prevNang: 3500, carat: 28.00, nang: 3400, vigat: "4p ok", timestamp: "2026-07-25T12:00:00Z" },
-        { id: "TR_M1_126_4", kapanNo: "M-1-126", fromDept: "RT", toDept: "KHATA", prevCarat: 28.00, prevNang: 3400, carat: 26.50, nang: 3400, vigat: "rt ok", timestamp: "2026-07-27T10:00:00Z" },
-        { id: "TR_M1_126_5", kapanNo: "M-1-126", fromDept: "KHATA", toDept: "OK KAPAN (ઓકે કાપણ)", prevCarat: 26.50, prevNang: 3400, carat: 20.00, nang: 3500, vigat: "Completed", timestamp: "2026-07-29T10:15:00Z" },
-
-        { id: "TR_M1_132_1", kapanNo: "M-1-132", fromDept: "Galaxy", toDept: "AP OK", prevCarat: 90.00, prevNang: 1700, carat: 89.90, nang: 3500, vigat: "[Rough to Polish %: 35] Galaxy to AP OK", timestamp: "2026-07-27T09:00:00Z" },
-        { id: "TR_M1_132_2", kapanNo: "M-1-132", fromDept: "AP OK", toDept: "4P", prevCarat: 89.90, prevNang: 3500, carat: 89.00, nang: 3495, vigat: "[Lots: 70] AP OK to 4P", timestamp: "2026-07-27T10:00:00Z" },
-        { id: "TR_M1_132_3", kapanNo: "M-1-132", fromDept: "4P", toDept: "4P OK RT BAAKI", prevCarat: 89.00, prevNang: 3495, carat: 39.50, nang: 3490, vigat: "[Lots: 70] 4P to 4P OK RT BAAKI", timestamp: "2026-07-27T11:00:00Z" },
-        { id: "TR_M1_132_4", kapanNo: "M-1-132", fromDept: "4P OK RT BAAKI", toDept: "RT", prevCarat: 39.50, prevNang: 3490, carat: 39.50, nang: 3490, vigat: "RT Transfer", timestamp: "2026-07-27T12:00:00Z" },
-        { id: "TR_M1_132_5", kapanNo: "M-1-132", fromDept: "RT", toDept: "RT OK KHATA BAAKI", prevCarat: 39.50, prevNang: 3490, carat: 38.50, nang: 3489, vigat: "RT OK Transfer", timestamp: "2026-07-27T13:00:00Z" },
-        { id: "TR_M1_132_6", kapanNo: "M-1-132", fromDept: "RT OK KHATA BAAKI", toDept: "KHATA", prevCarat: 38.50, prevNang: 3489, carat: 38.50, nang: 3489, vigat: "KHATA Transfer", timestamp: "2026-07-27T14:00:00Z" },
-        { id: "TR_M1_132_7", kapanNo: "M-1-132", fromDept: "KHATA", toDept: "OK KAPAN (ઓકે કાપણ)", prevCarat: 38.50, prevNang: 3489, carat: 29.00, nang: 3470, vigat: "OK KAPAN Transfer", timestamp: "2026-07-27T15:00:00Z" }
-      ];
-
-      state.repairs = [];
-      state.prunedMockData_v6 = true;
-    }
-
-
-    if (state.kapans.length === 0) {
-      // (This fallback is safe, already handled by prunedMockData_v4 check)
-    }
-    if (state.polishCharts.length === 0) {
-      // (This fallback is safe, already handled by prunedMockData_v4 check)
-    }
     if (!state.offlineBackupConfig) {
       state.offlineBackupConfig = {
         intervalDays: 1,
@@ -838,7 +757,7 @@
         folderName: ""
       };
     }
-    saveState();
+    saveStateLocally();
   }
 
   function calculateKraftSize(k) {
@@ -4681,9 +4600,10 @@
         },
         majuriRate: 65,
         roughLots: [], kapans: [], transfers: [], repairs: [], audits: [], polishCharts: [], transferRules: [],
-        depts: [...DEPTS], deptConfigs: {}, autoLogoutHours: 11, firebaseConfig: { apiKey: "AIzaSyDvu7pJMXatKNHFAuJMtsh_zpmb8Jr0BCM", dbUrl: "https://ng-cost-default-rtdb.firebaseio.com", projectId: "ng-cost" }, firebaseWiped: false,
+        depts: [...DEPTS], deptConfigs: {}, autoLogoutHours: 11, firebaseConfig: { apiKey: "AIzaSyDvu7pJMXatKNHFAuJMtsh_zpmb8Jr0BCM", dbUrl: "https://ng-cost-default-rtdb.firebaseio.com", projectId: "ng-cost" }, firebaseWiped: true,
         prunedMockData_v6: true
       };
+      isFirebaseSynced = true;
       if (dbRef) dbRef.set(state).catch(e => console.error('Reset sync failed:', e));
       checkInitialData();
       renderAll();
@@ -4705,9 +4625,10 @@
         },
         majuriRate: 65,
         roughLots: [], kapans: [], transfers: [], repairs: [], audits: [], polishCharts: [], transferRules: [],
-        depts: [...DEPTS], deptConfigs: {}, autoLogoutHours: 11, firebaseConfig: { apiKey: "AIzaSyDvu7pJMXatKNHFAuJMtsh_zpmb8Jr0BCM", dbUrl: "https://ng-cost-default-rtdb.firebaseio.com", projectId: "ng-cost" }, firebaseWiped: false,
+        depts: [...DEPTS], deptConfigs: {}, autoLogoutHours: 11, firebaseConfig: { apiKey: "AIzaSyDvu7pJMXatKNHFAuJMtsh_zpmb8Jr0BCM", dbUrl: "https://ng-cost-default-rtdb.firebaseio.com", projectId: "ng-cost" }, firebaseWiped: true,
         prunedMockData_v6: true
       };
+      isFirebaseSynced = true;
       if (dbRef) dbRef.set(state).catch(e => console.error('Reset sync failed:', e));
       checkInitialData();
       renderAll();
@@ -5364,9 +5285,10 @@
           },
           majuriRate: 65,
           roughLots: [], kapans: [], transfers: [], repairs: [], audits: [], polishCharts: [], transferRules: [],
-          depts: [...DEPTS], deptConfigs: {}, autoLogoutHours: 11, firebaseConfig: { apiKey: "AIzaSyDvu7pJMXatKNHFAuJMtsh_zpmb8Jr0BCM", dbUrl: "https://ng-cost-default-rtdb.firebaseio.com", projectId: "ng-cost" }, firebaseWiped: false,
+          depts: [...DEPTS], deptConfigs: {}, autoLogoutHours: 11, firebaseConfig: { apiKey: "AIzaSyDvu7pJMXatKNHFAuJMtsh_zpmb8Jr0BCM", dbUrl: "https://ng-cost-default-rtdb.firebaseio.com", projectId: "ng-cost" }, firebaseWiped: true,
           prunedMockData_v6: true
         };
+        isFirebaseSynced = true;
         if (dbRef) dbRef.set(state).catch(e => console.error('Reset sync failed:', e));
         checkInitialData();
         renderAll();
