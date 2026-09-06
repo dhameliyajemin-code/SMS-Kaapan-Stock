@@ -623,6 +623,61 @@
       });
   }
 
+  window.manualSyncAndRefresh = function() {
+    const btn = document.getElementById("manualSyncRefreshBtn");
+    if (btn) {
+      btn.innerHTML = "⏳ રિફ્રેશ...";
+      btn.disabled = true;
+    }
+    updateCloudSyncBadge("syncing", "ડાઉનલોડ / અપલોડ...");
+
+    if (!dbRef) {
+      initFirebase();
+    }
+
+    if (dbRef) {
+      dbRef.once("value").then((snapshot) => {
+        const val = snapshot.val();
+        if (val) {
+          state = val;
+          state.auth = ensureAuthHashesSync(state.auth);
+          if (!state.kapans) state.kapans = [];
+          if (!state.roughLots) state.roughLots = [];
+          if (!state.transfers) state.transfers = [];
+          if (!state.repairs) state.repairs = [];
+          if (!state.audits) state.audits = [];
+          if (!state.polishCharts) state.polishCharts = [];
+          if (!state.deptConfigs) state.deptConfigs = {};
+          isFirebaseSynced = true;
+          saveStateLocally();
+          renderAll();
+          updateCloudSyncBadge("synced", "તાજો ડેટા લોડ થયો");
+          showToast("✅ ક્લાઉડમાંથી તાજો ડેટા સફળતાપૂર્વક લોડ થયો!", "success");
+        } else {
+          isFirebaseSynced = true;
+          syncToFirebase();
+          updateCloudSyncBadge("synced", "ડેટાબેઝ ખાલી છે");
+        }
+      }).catch(err => {
+        console.error("Manual refresh failed:", err);
+        updateCloudSyncBadge("error", "રિફ્રેશ નિષ્ફળ");
+        showToast("❌ ક્લાઉડ રિફ્રેશ નિષ્ફળ: નેટવર્ક કનેક્શન તપાસો", "danger");
+      }).finally(() => {
+        if (btn) {
+          btn.innerHTML = "🔄 રિફ્રેશ / સિન્ક";
+          btn.disabled = false;
+        }
+      });
+    } else {
+      updateCloudSyncBadge("error", "કનેક્શન નથી");
+      if (btn) {
+        btn.innerHTML = "🔄 રિફ્રેશ / સિન્ક";
+        btn.disabled = false;
+      }
+      showToast("⚠️ Firebase સાથે કનેક્શન થયું નથી", "warning");
+    }
+  };
+
   function loadState() {
     const saved = safeStorage.getItem("diamond_stock_state_v7");
     if (saved) {
