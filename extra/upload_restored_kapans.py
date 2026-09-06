@@ -82,7 +82,7 @@ state = {
     {
       "id": "K_M2_69",
       "kapanNo": "M-2-69",
-      "roughId": "R_FINCSE",
+      "roughId": "R_KATUKA",
       "carat": 100.05,
       "nang": 1648,
       "roughWeight": 100.05,
@@ -90,7 +90,7 @@ state = {
       "currentDept": "Galaxy",
       "tag": "Regular",
       "status": "Chalu",
-      "vigat": "5/9 FINCSE",
+      "vigat": "KATUKA 7/5",
       "createdDate": "2026-08-30T14:38:35.000Z",
       "lastMovedDate": "2026-08-30T14:38:35.000Z"
     },

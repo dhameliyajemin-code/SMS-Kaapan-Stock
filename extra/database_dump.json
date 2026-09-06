@@ -117,12 +117,12 @@
       "kapanNo": "M-2-69",
       "lastMovedDate": "2026-08-30T14:38:35.000Z",
       "nang": 1648,
-      "roughId": "R_FINCSE",
+      "roughId": "R_KATUKA",
       "roughNang": 1648,
       "roughWeight": 100.05,
       "status": "Chalu",
       "tag": "Regular",
-      "vigat": "5/9 FINCSE"
+      "vigat": "KATUKA 7/5"
     },
     {
       "carat": 99.96,
@@ -156,6 +156,12 @@
     }
   ],
   "majuriRate": 65,
+  "offlineBackupConfig": {
+    "folderName": "",
+    "folderSelected": false,
+    "intervalDays": 1,
+    "lastBackupTime": "2026-09-06T09:36:45.479Z"
+  },
   "prunedMockData_v6": true,
   "roughLots": [
     {
